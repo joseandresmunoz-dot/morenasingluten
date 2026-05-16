@@ -1,0 +1,167 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Pedido {{ order.codigo }} - Admin{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Pedido {{ order.codigo }}</h3>
+    <a href="{{ url_for('admin.orders') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <!-- Productos -->
+        <div class="card mb-3">
+            <div class="card-header"><h6 class="mb-0">Productos</h6></div>
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center">Cantidad</th>
+                            <th class="text-end">P. Unit.</th>
+                            <th class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items %}
+                        <tr>
+                            <td>
+                                {{ item.product.nombre }}
+                                {% if item.personalizacion %}
+                                <br><small class="text-muted">
+                                    {% for grupo, opciones in item.personalizacion.items() %}
+                                    <em>{{ grupo }}:</em> {% for o in opciones %}{{ o.nombre }}{% if o.cantidad is defined and o.cantidad > 1 %} x{{ o.cantidad }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}<br>
+                                    {% endfor %}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">{{ item.cantidad }}</td>
+                            <td class="text-end">${{ "%.2f"|format(item.precio_unitario) }}</td>
+                            <td class="text-end">${{ "%.2f"|format(item.subtotal) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if order.notas %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6>Notas del cliente</h6>
+                <p class="mb-0">{{ order.notas }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <!-- Info del cliente -->
+        <div class="card mb-3">
+            <div class="card-header"><h6 class="mb-0">Cliente</h6></div>
+            <div class="card-body">
+                <p class="mb-1"><strong>{{ order.user.nombre }}</strong></p>
+                <p class="mb-1"><i class="bi bi-envelope"></i> {{ order.user.email }}</p>
+                {% if order.user.direccion %}
+                <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ order.user.direccion }}</p>
+                {% endif %}
+                {% if order.user.whatsapp %}
+                <p class="mb-0">
+                    <a href="https://wa.me/{{ order.user.whatsapp|replace('+','')|replace(' ','') }}" target="_blank" class="text-success">
+                        <i class="bi bi-whatsapp"></i> {{ order.user.whatsapp }}
+                    </a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Resumen -->
+        <div class="card mb-3">
+            <div class="card-header"><h6 class="mb-0">Resumen</h6></div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Subtotal:</span>
+                    <span>${{ "%.2f"|format(order.subtotal) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Entrega:</span>
+                    <span>{{ (order.tipo_entrega or 'retiro')|replace('_', ' ')|title }}</span>
+                </div>
+                {% if (order.tipo_entrega or 'retiro') == 'domicilio' %}
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Costo envío:</span>
+                    <span>${{ "%.2f"|format(order.costo_envio or 0) }}</span>
+                </div>
+                {% if order.direccion_entrega %}
+                <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ order.direccion_entrega }}</p>
+                {% endif %}
+                {% endif %}
+                {% if order.descuento > 0 %}
+                <div class="d-flex justify-content-between mb-1 text-success">
+                    <span>Descuento:</span>
+                    <span>-${{ "%.2f"|format(order.descuento) }}</span>
+                </div>
+                {% endif %}
+                <hr>
+                <div class="d-flex justify-content-between fw-bold">
+                    <span>Total:</span>
+                    <span>${{ "%.2f"|format(order.total) }}</span>
+                </div>
+                <div class="d-flex justify-content-between text-rosa fw-bold">
+                    <span>Seña (50%):</span>
+                    <span>${{ "%.2f"|format(order.senia) }}</span>
+                </div>
+                {% if order.fecha_retiro %}
+                <hr>
+                <p class="mb-0"><i class="bi bi-calendar"></i> Retiro: {{ order.fecha_retiro.strftime('%d/%m/%Y %H:%M') }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Cambiar estado -->
+        <div class="card mb-3">
+            <div class="card-header"><h6 class="mb-0">Estado del Pedido</h6></div>
+            <div class="card-body">
+                {% set colors = {'pendiente':'warning','senia_pagada':'info','confirmado':'primary','en_preparacion':'secondary','listo':'success','entregado':'success','cancelado':'danger'} %}
+                <p>Actual: <span class="badge bg-{{ colors.get(order.status,'secondary') }}">{{ order.status|replace('_',' ')|title }}</span></p>
+
+                <form method="POST" action="{{ url_for('admin.order_update_status', order_id=order.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <select name="status" class="form-select mb-2">
+                        <option value="pendiente" {% if order.status == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="senia_pagada" {% if order.status == 'senia_pagada' %}selected{% endif %}>Seña Pagada</option>
+                        <option value="confirmado" {% if order.status == 'confirmado' %}selected{% endif %}>Confirmado</option>
+                        <option value="en_preparacion" {% if order.status == 'en_preparacion' %}selected{% endif %}>En Preparación</option>
+                        <option value="listo" {% if order.status == 'listo' %}selected{% endif %}>Listo</option>
+                        <option value="entregado" {% if order.status == 'entregado' %}selected{% endif %}>Entregado</option>
+                        <option value="cancelado" {% if order.status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                    </select>
+                    <button type="submit" class="btn btn-morena btn-sm w-100">Actualizar Estado</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Fecha de retiro -->
+        <div class="card">
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-calendar-event"></i> Fecha de Retiro</h6></div>
+            <div class="card-body">
+                {% if order.fecha_retiro %}
+                <p class="mb-2">
+                    <i class="bi bi-check-circle text-success"></i>
+                    <strong>{{ order.fecha_retiro.strftime('%d/%m/%Y %H:%M') }} hs</strong>
+                </p>
+                {% endif %}
+                <form method="POST" action="{{ url_for('admin.order_set_fecha_retiro', order_id=order.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-2">
+                        <input type="datetime-local" name="fecha_retiro" class="form-control"
+                               value="{{ order.fecha_retiro.strftime('%Y-%m-%dT%H:%M') if order.fecha_retiro else '' }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-morena btn-sm w-100">
+                        <i class="bi bi-calendar-plus"></i> {{ 'Cambiar fecha' if order.fecha_retiro else 'Asignar fecha de retiro' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

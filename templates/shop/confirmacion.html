@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}Pedido Confirmado - Morena Sin Gluten{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="text-center mb-4">
+        <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+        <h2 class="mt-3">¡Pedido Realizado!</h2>
+        <p class="text-muted">Tu pedido <strong>{{ order.codigo }}</strong> fue registrado correctamente.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Detalle del pedido -->
+            <div class="card card-morena mb-4">
+                <div class="card-body">
+                    <h5>Detalle del Pedido</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Cant.</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items %}
+                            <tr>
+                                <td>
+                                    {{ item.product.nombre }}
+                                    {% if item.personalizacion %}
+                                    <br><small class="text-muted">
+                                        {% for grupo, opciones in item.personalizacion.items() %}
+                                        {{ grupo }}: {% for o in opciones %}{{ o.nombre }}{% if o.cantidad is defined and o.cantidad > 1 %} x{{ o.cantidad }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+                                        {% endfor %}
+                                    </small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">{{ item.cantidad }}</td>
+                                <td class="text-end">${{ "%.2f"|format(item.subtotal) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span>Subtotal:</span>
+                        <span>${{ "%.2f"|format(order.subtotal) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Entrega:</span>
+                        <span>{{ (order.tipo_entrega or 'retiro')|replace('_', ' ')|title }}</span>
+                    </div>
+                    {% if (order.tipo_entrega or 'retiro') == 'domicilio' and order.costo_envio > 0 %}
+                    <div class="d-flex justify-content-between">
+                        <span>Envío:</span>
+                        <span>${{ "%.2f"|format(order.costo_envio) }}</span>
+                    </div>
+                    {% endif %}
+                    {% if (order.tipo_entrega or 'retiro') == 'domicilio' and order.direccion_entrega %}
+                    <div class="small text-muted mt-1">
+                        <i class="bi bi-geo-alt"></i> {{ order.direccion_entrega }}
+                    </div>
+                    <div class="small text-muted">Entregamos a partir de las 18:00 hs.</div>
+                    {% endif %}
+                    {% if order.descuento > 0 %}
+                    <div class="d-flex justify-content-between text-success">
+                        <span>Descuento:</span>
+                        <span>-${{ "%.2f"|format(order.descuento) }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between fw-bold fs-5 mt-2">
+                        <span>TOTAL:</span>
+                        <span class="text-rosa">${{ "%.2f"|format(order.total) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de pago -->
+            <div class="card border-warning mb-4">
+                <div class="card-body text-center">
+                    <h5><i class="bi bi-credit-card-2-front"></i> Aboná la Seña para Confirmar</h5>
+                    <p class="fs-3 fw-bold text-rosa my-3">${{ "%.2f"|format(order.senia) }}</p>
+                    <p>Alias Mercado Pago: <strong class="fs-5">{{ mp_alias }}</strong></p>
+                    <p>Titular: <strong>{{ mp_titular }}</strong></p>
+                    <hr>
+                    <p class="text-muted small">El restante <strong>${{ "%.2f"|format(order.total - order.senia) }}</strong> lo abonás al retirar.</p>
+                    <p class="text-muted small">Una vez transferida la seña, enviá el comprobante por WhatsApp.</p>
+                </div>
+            </div>
+
+            <!-- WhatsApp -->
+            <div class="text-center mb-4" id="whatsappSection">
+                <a href="{{ whatsapp_url }}" target="_blank" class="btn btn-success btn-lg" id="whatsappBtn" onclick="onWhatsAppSent()">
+                    <i class="bi bi-whatsapp"></i> Enviar Pedido por WhatsApp
+                </a>
+                <p class="text-muted small mt-2">Se abrirá WhatsApp con el detalle de tu pedido.</p>
+            </div>
+
+            {% if show_wheel %}
+            <div class="card card-morena mt-3 mb-4 d-none" id="wheelReadySection">
+                <div class="card-body text-center">
+                    <h6 class="mb-3"><i class="bi bi-emoji-sunglasses text-rosa"></i> ¡Rueda de Premios lista!</h6>
+                    <p class="mb-2">Tu giro ya está disponible. Podés girar ahora.</p>
+                    <button type="button" class="btn btn-morena" onclick="showPrizeWheel()">Girar rueda</button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<script>
+function onWhatsAppSent() {
+    setTimeout(function() {
+        document.getElementById('whatsappSection').innerHTML =
+            '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> ¡Pedido enviado por WhatsApp!</div>' +
+            '<a href="{{ url_for("shop.my_orders") }}" class="btn btn-morena btn-lg">' +
+            '<i class="bi bi-bag"></i> Ver Mis Pedidos</a>';
+        const wheelReady = document.getElementById('wheelReadySection');
+        if (wheelReady) {
+            wheelReady.classList.remove('d-none');
+            showPrizeWheel();
+        }
+    }, 500);
+}
+</script>
+{% if show_wheel %}
+<div class="modal fade" id="prizeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-rosa text-white">
+                <h5 class="modal-title"><i class="bi bi-stars"></i> ¡Rueda de Premios!</h5>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-2">¡Tenés un giro disponible por tu pedido!</p>
+                <div class="position-relative d-inline-block">
+                    <canvas id="prizeWheel" width="280" height="280"></canvas>
+                </div>
+                <br>
+                <button id="spinBtn" class="btn btn-morena btn-lg mt-2" onclick="spinWheel()">
+                    <i class="bi bi-arrow-clockwise"></i> ¡Girar!
+                </button>
+                <div id="prizeResult" class="mt-3 d-none">
+                    <h4 id="prizeText" class="text-rosa"></h4>
+                    <div id="prizeCouponInfo" class="d-none alert alert-success mt-2">
+                        <p class="mb-1"><strong>🎁 ¡Ganaste un cupón!</strong></p>
+                        <p class="mb-1">Código: <strong id="couponCode" class="fs-5"></strong></p>
+                        <p class="mb-1"><small><i class="bi bi-clock"></i> Válido por 7 días. Vence: <strong id="couponExpiry"></strong></small></p>
+                        <p class="mb-0"><small>Tu cupón queda guardado para tu próxima compra y no se aplica en esta orden.</small></p>
+                    </div>
+                    <p id="prizeNoPrize" class="d-none text-muted">¡La próxima será! Seguí comprando.</p>
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        <a href="{{ url_for('shop.my_orders') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-bag"></i> Ver Mis Pedidos
+                        </a>
+                        <button id="wheelContinueBtn" type="button" class="btn btn-morena d-none">
+                            Continuar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/wheel.js') }}"></script>
+<script>
+let confirmSegments = [];
+let wheelToken = null;
+let canvas, ctx, cx, cy, currentAngle = 0;
+let segmentRanges = [];
+
+async function showPrizeWheel() {
+    confirmSegments = await fetchWheelSegments();
+    if (confirmSegments.length === 0) {
+        alert('No hay segmentos configurados en la rueda');
+        return;
+    }
+
+    wheelToken = await generateWheelToken();
+    if (!wheelToken) {
+        alert('No tienes giros disponibles');
+        return;
+    }
+
+    segmentRanges = buildSegmentRanges(confirmSegments);
+    canvas = document.getElementById('prizeWheel');
+    ctx = canvas.getContext('2d');
+    cx = canvas.width / 2;
+    cy = canvas.height / 2;
+    currentAngle = 0;
+    drawWheel(ctx, cx, cy, 130, confirmSegments, segmentRanges, currentAngle);
+    new bootstrap.Modal(document.getElementById('prizeModal')).show();
+}
+
+async function spinWheel() {
+    const btn = document.getElementById('spinBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Girando...';
+
+    try {
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+        const response = await fetch('/api/wheel/spin', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ token: wheelToken })
+        });
+
+        const text = await response.text();
+        let data;
+        try { data = JSON.parse(text); } catch (err) { throw new Error(text || 'Error en la rueda de premios'); }
+        if (!response.ok) throw new Error(data.error || 'Error en la rueda de premios');
+
+        const n = confirmSegments.length;
+        if (!n) throw new Error('No hay segmentos disponibles en la rueda.');
+
+        const index = confirmSegments.findIndex(s => s.id === data.segment_id);
+        const idx = index >= 0 ? index : 0;
+
+        const targetRotation = POINTER_ANGLE - WHEEL_START_OFFSET - idx * (2 * Math.PI) / n - Math.PI / n;
+        const startAng = currentAngle;
+        const spins = 6 + Math.random() * 3;
+        const delta = normalizeAngle(targetRotation - startAng) + (2 * Math.PI * spins);
+        const duration = 5000, startTime = performance.now();
+        const finalAngle = startAng + delta;
+
+        function animate(now) {
+            const t = Math.min((now - startTime) / duration, 1);
+            currentAngle = startAng + delta * (1 - Math.pow(1 - t, 3));
+            drawWheel(ctx, cx, cy, 130, confirmSegments, segmentRanges, currentAngle);
+            if (t < 1) { requestAnimationFrame(animate); return; }
+
+            currentAngle = finalAngle;
+            btn.classList.add('d-none');
+
+            drawWheel(ctx, cx, cy, 130, confirmSegments, segmentRanges, currentAngle, idx);
+            document.getElementById('prizeResult').classList.remove('d-none');
+            document.getElementById('prizeText').textContent = getPrizeMessage(data);
+
+            if (data.tiene_cupon) {
+                document.getElementById('prizeCouponInfo').classList.remove('d-none');
+                document.getElementById('couponCode').textContent = data.cupon;
+                if (data.vencimiento) {
+                    document.getElementById('couponExpiry').textContent = data.vencimiento;
+                }
+            } else if (data.tipo === 'sin_premio') {
+                document.getElementById('prizeNoPrize').classList.remove('d-none');
+            }
+
+            const continueBtn = document.getElementById('wheelContinueBtn');
+            if (continueBtn) {
+                continueBtn.classList.remove('d-none');
+                continueBtn.addEventListener('click', () => {
+                    const modalEl = document.getElementById('prizeModal');
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInstance) modalInstance.hide();
+                }, { once: true });
+            }
+        }
+        requestAnimationFrame(animate);
+    } catch (error) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> ¡Girar!';
+        alert(error.message || 'Error, intentá de nuevo.');
+    }
+}
+</script>
+{% endif %}
+{% endblock %}

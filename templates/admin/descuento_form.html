@@ -1,0 +1,95 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Nueva Regla de Descuento - Admin{% endblock %}
+{% block content %}
+<h3 class="mb-4">Nueva Regla de Descuento</h3>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Nombre de la regla *</label>
+                    <input type="text" name="nombre" class="form-control" placeholder="Ej: 10% al comprar 6+ facturas" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de regla *</label>
+                    <select name="tipo" class="form-select" id="tipoRegla" required>
+                        <option value="por_cantidad">Por cantidad</option>
+                        <option value="por_dia">Por día de la semana</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Condiciones por cantidad -->
+            <div id="condCantidad" class="row g-3 mt-1">
+                <div class="col-md-4">
+                    <label class="form-label">Cantidad mínima</label>
+                    <input type="number" name="min_cantidad" class="form-control" value="1" min="1">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Producto específico</label>
+                    <select name="producto_id" class="form-select">
+                        <option value="">Todos</option>
+                        {% for p in products %}
+                        <option value="{{ p.id }}">{{ p.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Categoría específica</label>
+                    <select name="categoria_id" class="form-select">
+                        <option value="">Todas</option>
+                        {% for c in categories %}
+                        <option value="{{ c.id }}">{{ c.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Condiciones por día -->
+            <div id="condDia" class="row g-3 mt-1 d-none">
+                <div class="col-md-6">
+                    <label class="form-label">Día de la semana</label>
+                    <select name="dia_semana" class="form-select">
+                        <option value="lunes">Lunes</option>
+                        <option value="martes">Martes</option>
+                        <option value="miercoles">Miércoles</option>
+                        <option value="jueves">Jueves</option>
+                        <option value="viernes">Viernes</option>
+                        <option value="sabado">Sábado</option>
+                        <option value="domingo">Domingo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de descuento</label>
+                    <select name="descuento_tipo" class="form-select">
+                        <option value="porcentaje">Porcentaje (%)</option>
+                        <option value="monto_fijo">Monto fijo ($)</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Valor del descuento</label>
+                    <input type="number" name="descuento_valor" class="form-control" step="0.01" min="0" required>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-morena"><i class="bi bi-check-lg"></i> Crear Regla</button>
+                <a href="{{ url_for('admin.discount_rules') }}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('tipoRegla').addEventListener('change', function() {
+    document.getElementById('condCantidad').classList.toggle('d-none', this.value !== 'por_cantidad');
+    document.getElementById('condDia').classList.toggle('d-none', this.value !== 'por_dia');
+});
+</script>
+{% endblock %}

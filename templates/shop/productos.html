@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Productos - Morena Sin Gluten{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="section-title mb-4">Nuestros Productos</h2>
+
+    <div class="row">
+        <!-- Filtros -->
+        <div class="col-md-3 mb-4">
+            <div class="card card-morena">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-funnel"></i> Filtrar</h6>
+
+                    <form method="GET" action="{{ url_for('shop.products') }}">
+                        <div class="mb-3">
+                            <label class="form-label small">Buscar</label>
+                            <input type="text" name="buscar" class="form-control form-control-sm" value="{{ buscar|default('') }}" placeholder="Nombre del producto...">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small">Categoría</label>
+                            <select name="categoria" class="form-select form-select-sm">
+                                <option value="">Todas</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small">Etiqueta</label>
+                            <select name="etiqueta" class="form-select form-select-sm">
+                                <option value="">Todas</option>
+                                {% for tag in tags %}
+                                <option value="{{ tag.id }}" {% if selected_tag == tag.id %}selected{% endif %}>{{ tag.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-morena btn-sm w-100">Filtrar</button>
+                    </form>
+
+                    {% if selected_category or selected_tag or buscar %}
+                    <a href="{{ url_for('shop.products') }}" class="btn btn-outline-secondary btn-sm w-100 mt-2">Limpiar filtros</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos -->
+        <div class="col-md-9">
+            {% if products %}
+            <div class="row g-3">
+                {% for product in products %}
+                <div class="col-6 col-lg-4">
+                    <div class="card card-morena h-100 product-card">
+                        <a href="{{ url_for('shop.product_detail', product_id=product.id) }}">
+                            {% if product.imagen_principal %}
+                            <img src="{{ product.imagen_principal }}" class="card-img-top img-cover img-h-200" alt="{{ product.nombre }}">
+                            {% else %}
+                            <div class="card-img-top bg-rosa-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-cake2 text-rosa" style="font-size: 3rem;"></i>
+                            </div>
+                            {% endif %}
+                        </a>
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title">{{ product.nombre }}</h6>
+                            {% if product.category %}
+                            <small class="text-muted">{{ product.category.nombre }}</small>
+                            {% endif %}
+                            <div class="mt-2">
+                                {% for tag in product.tags %}
+                                <span class="badge" style="background-color: {{ tag.color }}; font-size: 0.7rem;">{{ tag.nombre }}</span>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-auto pt-2">
+                                {% if current_user.is_authenticated %}
+                                <p class="precio mb-2">${{ "%.2f"|format(product.precio) }}</p>
+                                <a href="{{ url_for('shop.product_detail', product_id=product.id) }}" class="btn btn-sm btn-morena w-100">
+                                    {% if product.es_personalizable %}
+                                        <i class="bi bi-sliders"></i> Personalizar
+                                    {% else %}
+                                        <i class="bi bi-cart-plus"></i> Ver más
+                                    {% endif %}
+                                </a>
+                                {% if not product.es_personalizable %}
+                                <form method="POST" action="{{ url_for('shop.add_to_cart') }}" class="mt-2">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" name="cantidad" class="form-control" min="1" value="1" aria-label="Cantidad">
+                                        <button type="submit" class="btn btn-outline-dark">
+                                            <i class="bi bi-cart-plus"></i> Agregar
+                                        </button>
+                                    </div>
+                                </form>
+                                {% endif %}
+                                {% else %}
+                                <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-dark w-100">
+                                    <i class="bi bi-box-arrow-in-right"></i> Iniciá sesión para ver precios
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">No se encontraron productos.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

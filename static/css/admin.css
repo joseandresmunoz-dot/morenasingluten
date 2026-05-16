@@ -1,0 +1,173 @@
+/* === ADMIN PANEL STYLES === */
+
+:root {
+    --rosa: #C4756E;
+    --rosa-dark: #A85D56;
+    --rosa-light: #F5E6E4;
+    --marron: #8B4513;
+    --sidebar-width: 250px;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f5f6fa;
+    margin: 0;
+}
+
+/* Sidebar */
+.admin-sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background: linear-gradient(180deg, #2c2c3e 0%, #1a1a2e 100%);
+    padding: 0;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 100;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-header h5 {
+    color: #fff;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.sidebar-header i {
+    color: var(--rosa);
+}
+
+.admin-sidebar .nav-link {
+    color: rgba(255,255,255,0.6);
+    padding: 0.7rem 1.5rem;
+    font-size: 0.9rem;
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.admin-sidebar .nav-link:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.05);
+    border-left-color: var(--rosa);
+}
+
+.admin-sidebar .nav-link.active {
+    color: #fff;
+    background: rgba(196, 117, 110, 0.15);
+    border-left-color: var(--rosa);
+}
+
+.admin-sidebar .nav-link i {
+    width: 20px;
+    margin-right: 10px;
+    text-align: center;
+}
+
+/* Main content */
+.admin-content {
+    margin-left: var(--sidebar-width);
+    padding: 1.5rem 2rem;
+    min-height: 100vh;
+}
+
+/* Top bar */
+.admin-topbar {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Stat cards */
+.stat-card {
+    border: none;
+    border-radius: 12px;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Buttons */
+.btn-morena {
+    background-color: var(--rosa);
+    border-color: var(--rosa);
+    color: #fff;
+    border-radius: 8px;
+}
+
+.btn-morena:hover {
+    background-color: var(--rosa-dark);
+    border-color: var(--rosa-dark);
+    color: #fff;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.card-header {
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    border-radius: 10px 10px 0 0 !important;
+}
+
+/* Colors */
+.text-rosa { color: var(--rosa) !important; }
+.bg-rosa { background-color: var(--rosa) !important; }
+.bg-rosa-light { background-color: var(--rosa-light) !important; }
+
+.img-cover {
+    object-fit: cover !important;
+    object-position: center;
+    display: block;
+}
+
+.img-square-40 {
+    width: 40px;
+    height: 40px;
+    aspect-ratio: 1 / 1;
+}
+
+.img-h-110 {
+    width: 100%;
+    height: 110px;
+}
+
+/* Forms */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--rosa);
+    box-shadow: 0 0 0 0.2rem rgba(196, 117, 110, 0.25);
+}
+
+/* Table */
+.table th {
+    font-weight: 500;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #888;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+    .admin-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+    }
+
+    .admin-sidebar.show {
+        transform: translateX(0);
+    }
+
+    .admin-content {
+        margin-left: 0;
+    }
+}

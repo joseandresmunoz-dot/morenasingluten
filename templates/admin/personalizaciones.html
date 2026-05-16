@@ -1,0 +1,93 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Personalizaciones - {{ product.nombre }} - Admin{% endblock %}
+{% block content %}
+<h3 class="mb-2">Personalizaciones</h3>
+<p class="text-muted mb-4">Producto: <strong>{{ product.nombre }}</strong></p>
+
+<div class="row g-4">
+    <!-- Agregar grupo -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header"><h6 class="mb-0">Nuevo Grupo</h6></div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-2">
+                        <label class="form-label">Nombre del grupo</label>
+                        <input type="text" name="group_nombre" class="form-control" placeholder="Ej: Elegí tus facturas" required>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label">Mín. selec.</label>
+                            <input type="number" name="min_selecciones" class="form-control" value="0" min="0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Máx. selec.</label>
+                            <input type="number" name="max_selecciones" class="form-control" value="10" min="1">
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="obligatorio" id="obligatorio">
+                        <label class="form-check-label" for="obligatorio">Obligatorio</label>
+                    </div>
+                    <button type="submit" class="btn btn-morena btn-sm w-100">Agregar Grupo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grupos existentes -->
+    <div class="col-md-8">
+        {% for group in groups %}
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ group.nombre }}</strong>
+                    <small class="text-muted ms-2">({{ group.min_selecciones }}-{{ group.max_selecciones }} selecciones{% if group.obligatorio %}, obligatorio{% endif %})</small>
+                </div>
+                <form method="POST" action="{{ url_for('admin.delete_customization_group', group_id=group.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este grupo y todas sus opciones?')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="card-body">
+                <!-- Opciones existentes -->
+                {% for opt in group.options.all() %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>
+                        {{ opt.nombre }}
+                        {% if opt.precio_extra > 0 %}
+                        <span class="text-rosa">(+${{ "%.2f"|format(opt.precio_extra) }})</span>
+                        {% endif %}
+                    </span>
+                    <form method="POST" action="{{ url_for('admin.delete_customization_option', option_id=opt.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button>
+                    </form>
+                </div>
+                {% endfor %}
+
+                <!-- Agregar opción -->
+                <form method="POST" action="{{ url_for('admin.add_customization_option', group_id=group.id) }}" class="d-flex gap-2 mt-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="text" name="option_nombre" class="form-control form-control-sm" placeholder="Nueva opción" required>
+                    <input type="number" name="precio_extra" class="form-control form-control-sm" placeholder="$ extra" value="0" step="0.01" min="0" style="width: 100px;">
+                    <button type="submit" class="btn btn-sm btn-morena"><i class="bi bi-plus"></i></button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if not groups %}
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-sliders" style="font-size: 2rem;"></i>
+            <p class="mt-2">No hay grupos de personalización. Creá uno para empezar.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<a href="{{ url_for('admin.products') }}" class="btn btn-outline-secondary mt-3"><i class="bi bi-arrow-left"></i> Volver a Productos</a>
+{% endblock %}

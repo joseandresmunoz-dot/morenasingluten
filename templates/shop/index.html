@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block title %}Morena Sin Gluten - Tienda Sin Gluten{% endblock %}
+{% block content %}
+<!-- Hero -->
+<section class="hero-section">
+    <div class="container text-center position-relative">
+        <img src="{{ url_for('brand_image', filename='logo_frente.png') }}" alt="Morena Sin Gluten" class="hero-logo mb-3">
+        <h1 class="display-5 fw-semibold mb-3">Morena Sin Gluten</h1>
+        <p class="lead hero-tagline mb-4">Sabores artesanales sin gluten, con una propuesta cuidada, simple y deliciosa para cada ocasión.</p>
+        <a href="{{ url_for('shop.products') }}" class="btn btn-lg btn-morena">Ver Productos</a>
+    </div>
+</section>
+
+<!-- Categorías -->
+{% if categories %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="section-title text-center mb-4">Nuestras Categorías</h2>
+        <div class="row g-4">
+            {% for cat in categories %}
+            <div class="col-6 col-md-3">
+                <a href="{{ url_for('shop.products', categoria=cat.id) }}" class="text-decoration-none">
+                    <div class="card card-morena h-100 text-center">
+                        {% if cat.imagen %}
+                        <img src="{{ cat.imagen }}" class="card-img-top img-cover img-h-150" alt="{{ cat.nombre }}">
+                        {% else %}
+                        <div class="card-img-top bg-rosa-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                            <i class="bi bi-grid-3x3-gap text-rosa" style="font-size: 3rem;"></i>
+                        </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h6 class="card-title">{{ cat.nombre }}</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Productos Destacados -->
+{% if featured %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="section-title text-center mb-4">Productos Destacados</h2>
+        <div class="row g-4">
+            {% for product in featured %}
+            <div class="col-6 col-md-3">
+                <div class="card card-morena h-100 product-card">
+                    <a href="{{ url_for('shop.product_detail', product_id=product.id) }}">
+                        {% if product.imagen_principal %}
+                        <img src="{{ product.imagen_principal }}" class="card-img-top img-cover img-h-200" alt="{{ product.nombre }}">
+                        {% else %}
+                        <div class="card-img-top bg-rosa-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="bi bi-cake2 text-rosa" style="font-size: 3rem;"></i>
+                        </div>
+                        {% endif %}
+                    </a>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ product.nombre }}</h6>
+                        <div class="mt-auto">
+                            {% for tag in product.tags %}
+                            <span class="badge" style="background-color: {{ tag.color }};">{{ tag.nombre }}</span>
+                            {% endfor %}
+                            {% if current_user.is_authenticated %}
+                            <p class="precio mt-2 mb-2">${{ "%.2f"|format(product.precio) }}</p>
+                            <a href="{{ url_for('shop.product_detail', product_id=product.id) }}" class="btn btn-sm btn-morena w-100">
+                                {% if product.es_personalizable %}
+                                    <i class="bi bi-sliders"></i> Personalizar
+                                {% else %}
+                                    <i class="bi bi-cart-plus"></i> Ver más
+                                {% endif %}
+                            </a>
+                            {% if not product.es_personalizable %}
+                            <form method="POST" action="{{ url_for('shop.add_to_cart') }}" class="mt-2 home-qty-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="product_id" value="{{ product.id }}">
+                                <div class="input-group input-group-sm">
+                                    <button type="button" class="btn btn-outline-secondary home-qty-decrement" aria-label="Disminuir cantidad">
+                                        <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                    <input type="number" name="cantidad" class="form-control text-center home-quantity-input" min="1" value="1" aria-label="Cantidad">
+                                    <button type="button" class="btn btn-outline-secondary home-qty-increment" aria-label="Aumentar cantidad">
+                                        <i class="bi bi-chevron-up"></i>
+                                    </button>
+                                    <button type="submit" class="btn btn-outline-dark">
+                                        <i class="bi bi-cart-plus"></i> Agregar
+                                    </button>
+                                </div>
+                            </form>
+                            {% endif %}
+                            {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-dark w-100">
+                                <i class="bi bi-box-arrow-in-right"></i> Iniciá sesión para ver precios
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Productos Más Vendidos -->
+{% if best_sellers %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="section-title text-center mb-4">Productos Más Vendidos</h2>
+        <div class="row g-4">
+            {% for product in best_sellers %}
+            <div class="col-6 col-md-3">
+                <div class="card card-morena h-100 product-card">
+                    <a href="{{ url_for('shop.product_detail', product_id=product.id) }}">
+                        {% if product.imagen_principal %}
+                        <img src="{{ product.imagen_principal }}" class="card-img-top img-cover img-h-200" alt="{{ product.nombre }}">
+                        {% else %}
+                        <div class="card-img-top bg-rosa-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="bi bi-cake2 text-rosa" style="font-size: 3rem;"></i>
+                        </div>
+                        {% endif %}
+                    </a>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ product.nombre }}</h6>
+                        <div class="mt-auto">
+                            {% for tag in product.tags %}
+                            <span class="badge" style="background-color: {{ tag.color }};">{{ tag.nombre }}</span>
+                            {% endfor %}
+                            {% if current_user.is_authenticated %}
+                            <p class="precio mt-2 mb-2">${{ "%.2f"|format(product.precio) }}</p>
+                            <a href="{{ url_for('shop.product_detail', product_id=product.id) }}" class="btn btn-sm btn-morena w-100">
+                                {% if product.es_personalizable %}
+                                    <i class="bi bi-sliders"></i> Personalizar
+                                {% else %}
+                                    <i class="bi bi-cart-plus"></i> Ver más
+                                {% endif %}
+                            </a>
+                            {% if not product.es_personalizable %}
+                            <form method="POST" action="{{ url_for('shop.add_to_cart') }}" class="mt-2 home-qty-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="product_id" value="{{ product.id }}">
+                                <div class="input-group input-group-sm">
+                                    <button type="button" class="btn btn-outline-secondary home-qty-decrement" aria-label="Disminuir cantidad">
+                                        <i class="bi bi-chevron-down"></i>
+                                    </button>
+                                    <input type="number" name="cantidad" class="form-control text-center home-quantity-input" min="1" value="1" aria-label="Cantidad">
+                                    <button type="button" class="btn btn-outline-secondary home-qty-increment" aria-label="Aumentar cantidad">
+                                        <i class="bi bi-chevron-up"></i>
+                                    </button>
+                                    <button type="submit" class="btn btn-outline-dark">
+                                        <i class="bi bi-cart-plus"></i> Agregar
+                                    </button>
+                                </div>
+                            </form>
+                            {% endif %}
+                            {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-dark w-100">
+                                <i class="bi bi-box-arrow-in-right"></i> Iniciá sesión para ver precios
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Info Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-md-4">
+                <div class="info-card p-4">
+                    <i class="bi bi-patch-check-fill text-rosa" style="font-size: 2.5rem;"></i>
+                    <h5 class="mt-3">100% Sin Gluten</h5>
+                    <p class="text-muted">Todos nuestros productos son aptos para celíacos.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-card p-4">
+                    <i class="bi bi-whatsapp text-rosa" style="font-size: 2.5rem;"></i>
+                    <h5 class="mt-3">Pedidos por WhatsApp</h5>
+                    <p class="text-muted">Armá tu pedido y nos llega directo a nuestro WhatsApp.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-card p-4">
+                    <i class="bi bi-credit-card text-rosa" style="font-size: 2.5rem;"></i>
+                    <h5 class="mt-3">Seña del 50%</h5>
+                    <p class="text-muted">Abonás la mitad para confirmar y el resto al retirar.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+(function() {
+    const changeQuantity = (input, delta) => {
+        const current = Number(input.value) || 1;
+        input.value = Math.max(1, current + delta);
+    };
+
+    document.querySelectorAll('.home-qty-increment').forEach(button => {
+        button.addEventListener('click', () => {
+            const input = button.closest('form')?.querySelector('.home-quantity-input');
+            if (input) changeQuantity(input, 1);
+        });
+    });
+
+    document.querySelectorAll('.home-qty-decrement').forEach(button => {
+        button.addEventListener('click', () => {
+            const input = button.closest('form')?.querySelector('.home-quantity-input');
+            if (input) changeQuantity(input, -1);
+        });
+    });
+})();
+</script>
+{% endblock %}

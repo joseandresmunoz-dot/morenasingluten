@@ -1,0 +1,133 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ 'Editar' if product else 'Nuevo' }} Producto - Admin{% endblock %}
+{% block content %}
+<h3 class="mb-4">{{ 'Editar' if product else 'Nuevo' }} Producto</h3>
+
+{% if product and product.todas_las_imagenes %}
+<div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0"><i class="bi bi-images"></i> Imágenes del producto</h6></div>
+    <div class="card-body">
+        <div class="row g-2">
+            {% for img in product.todas_las_imagenes %}
+            <div class="col-auto">
+                <div class="card border {% if loop.first %}border-success border-2{% endif %}" style="width: 140px;">
+                    <img src="{{ img.url }}" class="card-img-top img-cover img-h-110">
+                    <div class="card-body p-1 text-center">
+                        {% if loop.first %}
+                        <span class="badge bg-success mb-1"><i class="bi bi-star-fill"></i> Principal</span>
+                        {% elif img.id != 0 %}
+                        <form method="POST" action="{{ url_for('admin.product_image_set_principal', image_id=img.id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-success btn-sm mb-1" title="Hacer principal">
+                                <i class="bi bi-star"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                        {% if img.id != 0 %}
+                        <form method="POST" action="{{ url_for('admin.product_image_delete', image_id=img.id) }}" class="d-inline"
+                              onsubmit="return confirm('¿Eliminar esta imagen?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm mb-1" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre *</label>
+                        <input type="text" name="nombre" class="form-control" value="{{ product.nombre if product else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea name="descripcion" class="form-control" rows="3">{{ product.descripcion if product else '' }}</textarea>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Precio *</label>
+                        <input type="number" name="precio" class="form-control" step="0.01" min="0" value="{{ product.precio if product else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categoría</label>
+                        <select name="category_id" class="form-select">
+                            <option value="">Sin categoría</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if product and product.category_id == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-cloud-arrow-up"></i> Agregar imágenes</label>
+                        <input type="file" name="imagenes" class="form-control" accept="image/*" multiple>
+                        <small class="text-muted">Podés seleccionar varias a la vez. Recomendado: 800x800px, JPG/WebP</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Etiquetas</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for tag in tags %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="tags" value="{{ tag.id }}" id="tag_{{ tag.id }}"
+                                {% if product and tag in product.tags %}checked{% endif %}>
+                            <label class="form-check-label" for="tag_{{ tag.id }}">
+                                <span class="badge" style="background-color: {{ tag.color }};">{{ tag.nombre }}</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" type="checkbox" name="es_personalizable" id="es_personalizable"
+                            {% if product and product.es_personalizable %}checked{% endif %}>
+                        <label class="form-check-label" for="es_personalizable">
+                            <strong>Producto personalizable</strong>
+                            <br><small class="text-muted">El cliente podrá elegir opciones (ej: facturas, sabores, rellenos)</small>
+                        </label>
+                    </div>
+
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="destacado" id="destacado"
+                            {% if product and product.destacado %}checked{% endif %}>
+                        <label class="form-check-label" for="destacado">Mostrar en productos destacados de inicio</label>
+                    </div>
+
+                    {% if product %}
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="activo" id="activo" {% if product.activo %}checked{% endif %}>
+                        <label class="form-check-label" for="activo">Activo</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="stock_disponible" id="stock_disponible" {% if product.stock_disponible %}checked{% endif %}>
+                        <label class="form-check-label" for="stock_disponible">Stock disponible</label>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-morena"><i class="bi bi-check-lg"></i> Guardar</button>
+                <a href="{{ url_for('admin.products') }}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

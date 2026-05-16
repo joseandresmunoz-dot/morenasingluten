@@ -1,0 +1,80 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Productos - Admin{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Productos</h3>
+    <a href="{{ url_for('admin.product_new') }}" class="btn btn-morena"><i class="bi bi-plus-lg"></i> Nuevo Producto</a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Personalizable</th>
+                        <th>Destacado</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr class="{{ 'table-secondary' if not product.activo }}">
+                        <td>
+                            {% if product.imagen_principal %}
+                            <img src="{{ product.imagen_principal }}" class="rounded img-cover img-square-40">
+                            {% else %}
+                            <div class="bg-rosa-light rounded d-flex align-items-center justify-content-center" style="width:40px; height:40px;"><i class="bi bi-cake2 text-rosa"></i></div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ product.nombre }}
+                            <br>
+                            {% for tag in product.tags %}
+                            <span class="badge" style="background-color: {{ tag.color }}; font-size: 0.6rem;">{{ tag.nombre }}</span>
+                            {% endfor %}
+                        </td>
+                        <td>{{ product.category.nombre if product.category else '-' }}</td>
+                        <td>${{ "%.2f"|format(product.precio) }}</td>
+                        <td>
+                            {% if product.es_personalizable %}
+                            <span class="badge bg-info">Sí</span>
+                            <a href="{{ url_for('admin.product_customizations', product_id=product.id) }}" class="btn btn-sm btn-outline-info ms-1"><i class="bi bi-sliders"></i></a>
+                            {% else %}
+                            <span class="text-muted">No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.destacado %}
+                            <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Sí</span>
+                            {% else %}
+                            <span class="text-muted">No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.activo %}
+                            <span class="badge bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge bg-danger">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.product_edit', product_id=product.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                            <form method="POST" action="{{ url_for('admin.product_delete', product_id=product.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Desactivar este producto?')"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

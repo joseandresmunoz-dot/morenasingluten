@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Mis Cupones - Morena Sin Gluten{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="text-rosa mb-4"><i class="bi bi-ticket-perforated"></i> Mis Cupones</h2>
+
+    <!-- Cupones activos -->
+    {% if active_coupons %}
+    <h5 class="mb-3"><i class="bi bi-check-circle text-success"></i> Disponibles</h5>
+    <div class="row g-3 mb-4">
+        {% for coupon, uc in active_coupons %}
+        <div class="col-md-4 col-sm-6">
+            <div class="card border-success h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-2">
+                        {% if coupon.tipo == 'porcentaje' %}
+                        <span class="badge bg-rosa fs-4 px-3 py-2">{{ "%.0f"|format(coupon.valor) }}% OFF</span>
+                        {% elif coupon.tipo == 'monto_fijo' %}
+                        <span class="badge bg-rosa fs-4 px-3 py-2">${{ "%.0f"|format(coupon.valor) }} OFF</span>
+                        {% elif coupon.tipo == 'envio_gratis' %}
+                        <span class="badge bg-rosa fs-4 px-3 py-2">Envío Gratis</span>
+                        {% endif %}
+                    </div>
+                    <h5 class="mt-2 mb-1">{{ coupon.codigo }}</h5>
+                    {% if coupon.descripcion %}
+                    <p class="text-muted small mb-2">{{ coupon.descripcion }}</p>
+                    {% endif %}
+                    {% if coupon.minimo_compra and coupon.minimo_compra > 0 %}
+                    <p class="small mb-1"><i class="bi bi-cart"></i> Compra mínima: ${{ "%.0f"|format(coupon.minimo_compra) }}</p>
+                    {% endif %}
+                    {% if coupon.fecha_fin %}
+                    <p class="small text-danger mb-0"><i class="bi bi-clock"></i> Vence: {{ coupon.fecha_fin.strftime('%d/%m/%Y') }}</p>
+                    {% else %}
+                    <p class="small text-success mb-0"><i class="bi bi-infinity"></i> Sin vencimiento</p>
+                    {% endif %}
+                    <hr class="my-2">
+                    <small class="text-muted">Ingresá el código en el carrito o seleccionalo en el checkout.</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-light text-center mb-4">
+        <i class="bi bi-ticket-perforated fs-1 text-muted"></i>
+        <p class="mt-2 mb-0">No tenés cupones disponibles por el momento.</p>
+        <small class="text-muted">¡Seguí comprando para ganar cupones con la Rueda de Premios!</small>
+    </div>
+    {% endif %}
+
+    {% if pending_coupons %}
+    <h5 class="mb-3 text-warning"><i class="bi bi-hourglass-split"></i> Próxima compra</h5>
+    <div class="row g-3 mb-4">
+        {% for coupon, uc in pending_coupons %}
+        <div class="col-md-4 col-sm-6">
+            <div class="card border-warning h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-2">
+                        {% if coupon.tipo == 'porcentaje' %}
+                        <span class="badge bg-rosa fs-4 px-3 py-2">{{ "%.0f"|format(coupon.valor) }}% OFF</span>
+                        {% elif coupon.tipo == 'monto_fijo' %}
+                        <span class="badge bg-rosa fs-4 px-3 py-2">${{ "%.0f"|format(coupon.valor) }} OFF</span>
+                        {% elif coupon.tipo == 'envio_gratis' %}
+                        <span class="badge bg-rosa fs-4 px-3 py-2">Envío Gratis</span>
+                        {% endif %}
+                    </div>
+                    <h5 class="mt-2 mb-1">{{ coupon.codigo }}</h5>
+                    {% if coupon.descripcion %}
+                    <p class="text-muted small mb-2">{{ coupon.descripcion }}</p>
+                    {% endif %}
+                    {% if coupon.minimo_compra and coupon.minimo_compra > 0 %}
+                    <p class="small mb-1"><i class="bi bi-cart"></i> Compra mínima: ${{ "%.0f"|format(coupon.minimo_compra) }}</p>
+                    {% endif %}
+                    {% if coupon.fecha_fin %}
+                    <p class="small text-danger mb-0"><i class="bi bi-clock"></i> Vence: {{ coupon.fecha_fin.strftime('%d/%m/%Y') }}</p>
+                    {% else %}
+                    <p class="small text-success mb-0"><i class="bi bi-infinity"></i> Sin vencimiento</p>
+                    {% endif %}
+                    <hr class="my-2">
+                    <small class="text-muted">Este cupón estará disponible para la próxima compra.</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Cupones usados/vencidos -->
+    {% if used_coupons %}
+    <h5 class="mb-3 text-muted"><i class="bi bi-archive"></i> Usados / Vencidos</h5>
+    <div class="row g-3">
+        {% for coupon, uc in used_coupons %}
+        <div class="col-md-4 col-sm-6">
+            <div class="card border-secondary h-100 opacity-50">
+                <div class="card-body text-center">
+                    <div class="mb-2">
+                        {% if coupon.tipo == 'porcentaje' %}
+                        <span class="badge bg-secondary fs-5 px-3 py-2">{{ "%.0f"|format(coupon.valor) }}% OFF</span>
+                        {% elif coupon.tipo == 'monto_fijo' %}
+                        <span class="badge bg-secondary fs-5 px-3 py-2">${{ "%.0f"|format(coupon.valor) }} OFF</span>
+                        {% elif coupon.tipo == 'envio_gratis' %}
+                        <span class="badge bg-secondary fs-5 px-3 py-2">Envío Gratis</span>
+                        {% endif %}
+                    </div>
+                    <h6 class="mt-2 mb-1">{{ coupon.codigo }}</h6>
+                    {% if uc.usado %}
+                    <span class="badge bg-dark"><i class="bi bi-check"></i> Usado</span>
+                    {% elif coupon.fecha_fin and coupon.fecha_fin <= current_time %}
+                    <span class="badge bg-danger"><i class="bi bi-x"></i> Vencido</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Completar Perfil - Morena Sin Gluten{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm card-morena">
+                <div class="card-body p-4">
+                    <h3 class="text-center mb-4">Completar Perfil</h3>
+                    {% if not current_user.email_verificado %}
+                    <div class="alert alert-warning">
+                        Tu email todavía no está verificado.
+                        <form method="POST" action="{{ url_for('auth.resend_verification_email') }}" class="mt-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-dark">Reenviar link de verificación</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                    <p class="text-muted text-center">Necesitamos tu número de WhatsApp para poder contactarte sobre tus pedidos.</p>
+
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" value="{{ current_user.nombre }}" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" value="{{ current_user.email }}" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">WhatsApp <span class="text-danger">*</span></label>
+                            <input type="tel" name="whatsapp" class="form-control" value="{{ current_user.whatsapp or '' }}" placeholder="+54 9 ..." required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Domicilio <small class="text-muted">(opcional)</small></label>
+                            <input type="text" name="direccion" class="form-control" value="{{ current_user.direccion or '' }}" placeholder="Calle, número, piso/depto, localidad">
+                        </div>
+                        <button type="submit" class="btn btn-morena w-100">Guardar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,520 @@
+{% extends "base.html" %}
+{% block title %}Checkout - Morena Sin Gluten{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="section-title mb-4"><i class="bi bi-bag-check"></i> Finalizar Pedido</h2>
+
+    <div class="row">
+        <div class="col-lg-7">
+            <!-- Resumen del pedido -->
+            <div class="card card-morena mb-3">
+                <div class="card-body">
+                    <h5 class="mb-3">Tu Pedido</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm checkout-items-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th class="text-center">Cant.</th>
+                                            <th class="text-end">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in items %}
+                                        <tr>
+                                            <td data-label="Producto">
+                                                {{ item.product.nombre }}
+                                                {% if item.personalizacion %}
+                                                <br><small class="text-muted">
+                                                    {% for grupo, opciones in item.personalizacion.items() %}
+                                                    {{ grupo }}: {% for o in opciones %}{{ o.nombre }}{% if o.cantidad is defined and o.cantidad > 1 %} x{{ o.cantidad }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+                                                    {% endfor %}
+                                                </small>
+                                                {% endif %}
+                                            </td>
+                                            <td data-label="Cant." class="text-center">
+                                                <div class="input-group input-group-sm justify-content-center" style="max-width: 170px; margin: 0 auto;">
+                                                    <button type="button" class="btn btn-outline-secondary checkout-qty-decrement" aria-label="Disminuir cantidad">
+                                                        <i class="bi bi-chevron-down"></i>
+                                                    </button>
+                                                    <input type="number" min="1" max="99" class="form-control form-control-sm checkout-quantity text-center" value="{{ item.cantidad }}" data-index="{{ loop.index0 }}" data-price="{{ "%.2f"|format(item.precio) }}" aria-label="Cantidad de {{ item.product.nombre }}">
+                                                    <button type="button" class="btn btn-outline-secondary checkout-qty-increment" aria-label="Aumentar cantidad">
+                                                        <i class="bi bi-chevron-up"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td data-label="Subtotal" class="text-end checkout-item-subtotal">${{ "%.2f"|format(item.subtotal) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+            {% if available_coupons and not coupon %}
+            <div class="card card-morena mt-3 mb-3">
+                <div class="card-body">
+                    <h6 class="mb-3"><i class="bi bi-ticket-perforated text-rosa"></i> Tus Cupones Disponibles</h6>
+                    {% for c in available_coupons %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                        <div>
+                            <strong>{{ c.codigo }}</strong>
+                            <br>
+                            <small class="text-muted">
+                                {% if c.tipo == 'porcentaje' %}{{ "%.0f"|format(c.valor) }}% de descuento
+                                {% elif c.tipo == 'monto_fijo' %}-${{ "%.0f"|format(c.valor) }}
+                                {% endif %}
+                            </small>
+                            {% if c.fecha_fin %}
+                            <br><small class="text-danger"><i class="bi bi-clock"></i> Vence: {{ c.fecha_fin.strftime('%d/%m/%Y') }}</small>
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{{ url_for('shop.apply_coupon_checkout') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="coupon_id" value="{{ c.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-success">Usar</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if coupon %}
+            <div class="card border-success mt-3 mb-3">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        <strong>Cupón aplicado:</strong> {{ coupon.codigo }}
+                        <small class="text-muted">
+                            ({% if coupon.tipo == 'porcentaje' %}{{ "%.0f"|format(coupon.valor) }}% OFF{% elif coupon.tipo == 'monto_fijo' %}-${{ "%.0f"|format(coupon.valor) }}{% endif %})
+                        </small>
+                    </div>
+                    <form method="POST" action="{{ url_for('shop.remove_coupon') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="redirect" value="checkout">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Quitar</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="POST" id="checkout-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="card card-morena mb-3">
+                    <div class="card-body">
+                        <h5 class="mb-3">Detalles del Pedido</h5>
+                        <div class="mb-3">
+                            <label class="form-label">¿Cómo querés recibir tu pedido?</label>
+                            <select name="tipo_entrega" id="tipo_entrega" class="form-select">
+                                <option value="retiro" {% if tipo_entrega == 'retiro' %}selected{% endif %}>Retiro en local</option>
+                                <option value="domicilio" {% if tipo_entrega == 'domicilio' %}selected{% endif %}>Envío a domicilio (+${{ "%.2f"|format(envio_domicilio_costo) }})</option>
+                            </select>
+                            <small class="text-muted d-block mt-1">Los pedidos para retirar se entregan en el horario seleccionado (16:00-18:00 hs).</small>
+                        </div>
+                        <div class="mb-3" id="direccionEntregaGroup" {% if tipo_entrega != 'domicilio' %}style="display:none;"{% endif %}>
+                            <label class="form-label">Dirección de entrega</label>
+                            <input type="text" name="direccion_entrega" id="direccion_entrega" class="form-control" value="{{ direccion_entrega or '' }}" placeholder="Calle, número, piso/depto, localidad">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fecha y hora de entrega</label>
+                            <input type="datetime-local" name="fecha_retiro" class="form-control" id="fecha_entrega">
+                            <div class="form-text">
+                                <div class="alert alert-info py-2 px-3 mb-0">
+                                    <small>
+                                        <i class="bi bi-info-circle"></i>
+                                        <strong>Información importante sobre entregas:</strong><br>
+                                        • La mayoría de los pedidos se entregan en <strong>24/48 horas</strong> dependiendo de la congestión de la cocina<br>
+                                        • Los horarios de entrega son de <strong>16:00 a 18:00 hs</strong><br>
+                                        • Salvo casos excepcionales, podemos hacer una excepción con el horario
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notas adicionales</label>
+                            <textarea name="notas" class="form-control" rows="3" placeholder="Indicaciones especiales, alergias, etc."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-morena btn-lg w-100 d-none d-lg-block">
+                    <i class="bi bi-whatsapp"></i> Confirmar Pedido y Enviar por WhatsApp
+                </button>
+            </form>
+
+        </div>
+
+        <!-- Panel de costos -->
+        <div class="col-lg-5">
+            <div class="card card-morena sticky-top" style="top: 80px;">
+                <div class="card-body">
+                    <h5 class="mb-3">Resumen de Pago</h5>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span id="checkout-subtotal" data-value="{{ "%.2f"|format(subtotal) }}">${{ "%.2f"|format(subtotal) }}</span>
+                    </div>
+
+                    {% if discount_rules %}
+                    {% for d in discount_rules %}
+                    <div class="d-flex justify-content-between mb-1 text-success">
+                        <small><i class="bi bi-tag-fill"></i> {{ d.nombre }}</small>
+                        <small>-${{ "%.2f"|format(d.descuento) }}</small>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if coupon %}
+                    <div class="d-flex justify-content-between mb-1 text-success">
+                        <small><i class="bi bi-ticket-perforated"></i> Cupón: {{ coupon.codigo }}</small>
+                        <small>-${{ "%.2f"|format(descuento_cupon) }}</small>
+                    </div>
+                    {% endif %}
+
+                    {% if costo_envio > 0 %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Envío a domicilio</span>
+                        <span id="checkout-shipping" data-value="{{ "%.2f"|format(costo_envio) }}">${{ "%.2f"|format(costo_envio) }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if descuento_total > 0 %}
+                    <div class="d-flex justify-content-between mb-2 text-success fw-bold">
+                        <span>Descuento total</span>
+                        <span id="checkout-discount-total" data-value="{{ "%.2f"|format(descuento_total) }}">-${{ "%.2f"|format(descuento_total) }}</span>
+                    </div>
+                    {% endif %}
+
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                        <span>TOTAL</span>
+                        <span id="checkout-total" data-value="{{ "%.2f"|format(total) }}" class="text-rosa">${{ "%.2f"|format(total) }}</span>
+                    </div>
+
+                    <!-- Información de seña -->
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading"><i class="bi bi-info-circle-fill"></i> Información de Pago</h6>
+                        <hr>
+                        <p class="mb-1"><strong>Para confirmar tu pedido debés abonar la seña (50%):</strong></p>
+                        <p class="fs-4 fw-bold text-center my-3 text-rosa" id="checkout-senia" data-value="{{ "%.2f"|format(senia) }}">${{ "%.2f"|format(senia) }}</p>
+                        <p class="mb-1">El restante <strong id="checkout-restante">${{ "%.2f"|format(total - senia) }}</strong> lo abonás al momento de retirar.</p>
+                        <hr>
+                        <div class="text-center">
+                            <p class="mb-1"><strong>Datos para transferencia:</strong></p>
+                            <p class="mb-1">Alias: <strong class="fs-5">{{ mp_alias }}</strong></p>
+                            <p class="mb-1">Titular: <strong>{{ mp_titular }}</strong></p>
+                            <p class="mb-0"><small class="text-muted">Mercado Pago</small></p>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning small">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        Una vez que realices la transferencia, enviá el comprobante por WhatsApp para confirmar tu pedido.
+                    </div>
+                    <button type="submit" form="checkout-form" class="btn btn-morena btn-lg w-100 d-block d-lg-none mt-3">
+                        <i class="bi bi-whatsapp"></i> Confirmar Pedido y Enviar por WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    const tipoEntrega = document.getElementById('tipo_entrega');
+    const direccionGroup = document.getElementById('direccionEntregaGroup');
+    const direccionInput = document.getElementById('direccion_entrega');
+    function syncEntrega() {
+        const isDomicilio = tipoEntrega && tipoEntrega.value === 'domicilio';
+        if (direccionGroup) {
+            direccionGroup.style.display = isDomicilio ? '' : 'none';
+        }
+        if (direccionInput) {
+            direccionInput.required = isDomicilio;
+        }
+    }
+    if (tipoEntrega) {
+        tipoEntrega.addEventListener('change', syncEntrega);
+        syncEntrega();
+    }
+})();
+</script>
+<script>
+(function() {
+    const qtyInputs = document.querySelectorAll('.checkout-quantity');
+    if (!qtyInputs.length) return;
+
+    const subtotalEl = document.getElementById('checkout-subtotal');
+    const shippingEl = document.getElementById('checkout-shipping');
+    const discountEl = document.getElementById('checkout-discount-total');
+    const totalEl = document.getElementById('checkout-total');
+    const seniaEl = document.getElementById('checkout-senia');
+    const restanteEl = document.getElementById('checkout-restante');
+
+    const parseNumber = value => {
+        if (typeof value === 'number') return value;
+        const cleaned = String(value).replace(/[^0-9.-]/g, '');
+        return parseFloat(cleaned) || 0;
+    };
+
+    const formatMoney = amount => Number(amount).toFixed(2);
+
+    const recalcTotals = () => {
+        let subtotal = 0;
+
+        qtyInputs.forEach(input => {
+            const quantity = Math.max(1, Number(input.value) || 1);
+            input.value = quantity;
+            const price = parseNumber(input.dataset.price);
+            const rowSubtotal = price * quantity;
+            subtotal += rowSubtotal;
+
+            const row = input.closest('tr');
+            const subtotalCell = row && row.querySelector('.checkout-item-subtotal');
+            if (subtotalCell) {
+                subtotalCell.textContent = '$' + formatMoney(rowSubtotal);
+            }
+        });
+
+        if (subtotalEl) {
+            subtotalEl.textContent = '$' + formatMoney(subtotal);
+            subtotalEl.dataset.value = subtotal.toFixed(2);
+        }
+
+        const shipping = shippingEl ? parseNumber(shippingEl.dataset.value || shippingEl.textContent) : 0;
+        const discount = discountEl ? parseNumber(discountEl.dataset.value || discountEl.textContent) : 0;
+        const total = Math.max(subtotal - discount + shipping, 0);
+
+        if (totalEl) {
+            totalEl.textContent = '$' + formatMoney(total);
+            totalEl.dataset.value = total.toFixed(2);
+        }
+        if (seniaEl) {
+            const senia = total / 2;
+            seniaEl.textContent = '$' + formatMoney(senia);
+            seniaEl.dataset.value = senia.toFixed(2);
+        }
+        if (restanteEl) {
+            restanteEl.textContent = '$' + formatMoney(total / 2);
+        }
+    };
+
+    const debounce = (fn, delay = 300) => {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => fn(...args), delay);
+        };
+    };
+
+    const persistQuantity = debounce(input => {
+        const index = input.dataset.index;
+        const cantidad = Math.max(1, Number(input.value) || 1);
+        const csrfInput = document.querySelector('input[name="csrf_token"]');
+        const csrfToken = csrfInput ? csrfInput.value : '';
+        fetch('{{ url_for("shop.update_cart") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `csrf_token=${encodeURIComponent(csrfToken)}&index=${encodeURIComponent(index)}&cantidad=${encodeURIComponent(cantidad)}`,
+            credentials: 'same-origin'
+        }).catch(() => {});
+    }, 400);
+
+    const changeQuantity = (input, delta) => {
+        const current = Number(input.value) || 1;
+        input.value = Math.max(1, current + delta);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    qtyInputs.forEach(input => {
+        input.addEventListener('input', event => {
+            const target = event.target;
+            if (target.value === '' || Number(target.value) < 1) {
+                target.value = 1;
+            }
+            recalcTotals();
+            persistQuantity(target);
+        });
+    });
+
+    document.querySelectorAll('.checkout-qty-increment').forEach(button => {
+        button.addEventListener('click', () => {
+            const input = button.closest('tr')?.querySelector('.checkout-quantity');
+            if (input) changeQuantity(input, 1);
+        });
+    });
+
+    document.querySelectorAll('.checkout-qty-decrement').forEach(button => {
+        button.addEventListener('click', () => {
+            const input = button.closest('tr')?.querySelector('.checkout-quantity');
+            if (input) changeQuantity(input, -1);
+        });
+    });
+
+    recalcTotals();
+})();
+</script>
+{% if show_wheel %}
+<div class="modal fade" id="prizeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-rosa text-white">
+                <h5 class="modal-title"><i class="bi bi-stars"></i> ¡Rueda de Premios!</h5>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-2">¡Tenés un giro disponible por tu pedido!</p>
+                <div class="position-relative d-inline-block">
+                    <canvas id="prizeWheel" width="280" height="280"></canvas>
+                </div>
+                <br>
+                <button id="spinBtn" class="btn btn-morena btn-lg mt-2" onclick="spinWheel()">
+                    <i class="bi bi-arrow-clockwise"></i> ¡Girar!
+                </button>
+                <div id="prizeResult" class="mt-3 d-none">
+                    <h4 id="prizeText" class="text-rosa"></h4>
+                    <button id="wheelContinueBtn" type="button" class="btn btn-morena mt-3 d-none">
+                        Continuar al próximo paso
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/wheel.js') }}"></script>
+<script>
+let wheelSegments = [];
+let wheelToken = null;
+let canvas, ctx, cx, cy, wheelCurrentAngle = 0;
+let segmentRanges = [];
+let checkoutRedirectUrl = null;
+
+async function showCheckoutPrizeWheel() {
+    wheelSegments = await fetchWheelSegments();
+    if (wheelSegments.length === 0) {
+        alert('No hay segmentos configurados en la rueda');
+        return;
+    }
+
+    wheelToken = await generateWheelToken();
+    if (!wheelToken) {
+        alert('No tienes giros disponibles');
+        return;
+    }
+
+    segmentRanges = buildSegmentRanges(wheelSegments);
+    canvas = document.getElementById('prizeWheel');
+    ctx = canvas.getContext('2d');
+    cx = canvas.width / 2;
+    cy = canvas.height / 2;
+    wheelCurrentAngle = 0;
+    drawWheel(ctx, cx, cy, 130, wheelSegments, segmentRanges, wheelCurrentAngle);
+    new bootstrap.Modal(document.getElementById('prizeModal')).show();
+}
+
+async function spinWheel() {
+    const btn = document.getElementById('spinBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Girando...';
+
+    try {
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+        const response = await fetch('/api/wheel/spin', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ token: wheelToken })
+        });
+
+        const text = await response.text();
+        let data;
+        try { data = JSON.parse(text); } catch (err) { throw new Error(text || 'Error en la rueda de premios'); }
+        if (!response.ok) throw new Error(data.error || 'Error en la rueda de premios');
+
+        const n = wheelSegments.length;
+        if (!n) throw new Error('No hay segmentos disponibles en la rueda.');
+
+        const index = wheelSegments.findIndex(s => s.id === data.segment_id);
+        const idx = index >= 0 ? index : 0;
+
+        const angle = 2 * Math.PI;
+        const targetRotation = POINTER_ANGLE - WHEEL_START_OFFSET - idx * angle / n - Math.PI / n;
+        const startAng = wheelCurrentAngle;
+        const spins = 6 + Math.random() * 3;
+        const delta = normalizeAngle(targetRotation - startAng) + (2 * Math.PI * spins);
+        const duration = 5000, startTime = performance.now();
+        const finalAngle = startAng + delta;
+
+        function animate(now) {
+            const t = Math.min((now - startTime) / duration, 1);
+            wheelCurrentAngle = startAng + delta * (1 - Math.pow(1 - t, 3));
+            drawWheel(ctx, cx, cy, 130, wheelSegments, segmentRanges, wheelCurrentAngle);
+            if (t < 1) { requestAnimationFrame(animate); return; }
+
+            wheelCurrentAngle = finalAngle;
+            drawWheel(ctx, cx, cy, 130, wheelSegments, segmentRanges, wheelCurrentAngle, idx);
+
+            document.getElementById('prizeText').textContent = getPrizeMessage(data);
+            document.getElementById('prizeResult').classList.remove('d-none');
+            btn.classList.add('d-none');
+            const continueBtn = document.getElementById('wheelContinueBtn');
+            if (continueBtn && checkoutRedirectUrl) {
+                continueBtn.classList.remove('d-none');
+                continueBtn.addEventListener('click', () => {
+                    window.location.href = checkoutRedirectUrl;
+                }, { once: true });
+            } else if (checkoutRedirectUrl) {
+                window.location.href = checkoutRedirectUrl;
+            }
+        }
+        requestAnimationFrame(animate);
+    } catch (error) {
+        alert(error.message || 'Error, intentá de nuevo.');
+        if (checkoutRedirectUrl) {
+            window.location.href = checkoutRedirectUrl;
+        }
+    }
+}
+
+(function() {
+    const form = document.getElementById('checkout-form');
+    if (!form) return;
+    let submitting = false;
+
+    form.addEventListener('submit', async function(event) {
+        if (submitting) return;
+        event.preventDefault();
+        submitting = true;
+
+        const btns = document.querySelectorAll('button[type="submit"], button[form="checkout-form"]');
+        btns.forEach(b => b.disabled = true);
+
+        try {
+            const response = await fetch(form.action || window.location.href, {
+                method: 'POST',
+                body: new FormData(form),
+                credentials: 'same-origin'
+            });
+            const finalUrl = response.url;
+            const html = await response.text();
+            if (!response.ok) throw new Error('No se pudo procesar el pedido.');
+            if (finalUrl.includes('/pedido/') && finalUrl.includes('/confirmacion')) {
+                checkoutRedirectUrl = finalUrl;
+                showCheckoutPrizeWheel();
+                return;
+            }
+            document.open();
+            document.write(html);
+            document.close();
+        } catch (err) {
+            submitting = false;
+            btns.forEach(b => b.disabled = false);
+            alert(err.message || 'Error al confirmar el pedido.');
+        }
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

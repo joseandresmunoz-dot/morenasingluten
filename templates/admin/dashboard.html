@@ -1,0 +1,261 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Dashboard - Admin{% endblock %}
+{% block content %}
+<h3 class="mb-4">Dashboard</h3>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card bg-rosa text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-white-50">Total Ventas</h6>
+                        <h3>{{ total_ventas }}</h3>
+                    </div>
+                    <i class="bi bi-bag-check" style="font-size: 2rem; opacity: 0.5;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-white-50">Total Ingresos</h6>
+                        <h3>${{ "%.2f"|format(total_ingresos) }}</h3>
+                    </div>
+                    <i class="bi bi-cash-stack" style="font-size: 2rem; opacity: 0.5;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-white-50">Productos Vendidos</h6>
+                        <h3>{{ productos_vendidos }}</h3>
+                    </div>
+                    <i class="bi bi-box-seam" style="font-size: 2rem; opacity: 0.5;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-dark opacity-50">Clientes</h6>
+                        <h3>{{ clientes_total }}</h3>
+                    </div>
+                    <i class="bi bi-people" style="font-size: 2rem; opacity: 0.5;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h6 class="text-muted">Ventas este mes</h6>
+                <h4>{{ ventas_mes }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h6 class="text-muted">Ingresos este mes</h6>
+                <h4>${{ "%.2f"|format(ingresos_mes) }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h6 class="text-muted">Ingresos envíos (mes)</h6>
+                <h4>${{ "%.2f"|format(ingresos_envio_mes) }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Costo envío domicilio</h6>
+                <form method="POST" action="{{ url_for('admin.update_shipping_config') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">$</span>
+                        <input type="number" name="envio_domicilio_costo" class="form-control" min="0" step="0.01" value="{{ '%.2f'|format(envio_domicilio_costo) }}" required>
+                        <button class="btn btn-morena" type="submit">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Pedidos recientes -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Últimos Pedidos</h6>
+                <a href="{{ url_for('admin.orders') }}" class="btn btn-sm btn-outline-secondary">Ver todos</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Cliente</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in pedidos_recientes %}
+                            <tr>
+                                <td><a href="{{ url_for('admin.order_detail', order_id=order.id) }}">{{ order.codigo }}</a></td>
+                                <td>{{ order.user.nombre }}</td>
+                                <td>${{ "%.2f"|format(order.total) }}</td>
+                                <td>
+                                    <select class="form-select form-select-sm status-select" data-order-id="{{ order.id }}" style="width: auto; min-width: 140px;">
+                                        <option value="pendiente" {{ 'selected' if order.status == 'pendiente' else '' }}>Pendiente</option>
+                                        <option value="senia_pagada" {{ 'selected' if order.status == 'senia_pagada' else '' }}>Seña Pagada</option>
+                                        <option value="confirmado" {{ 'selected' if order.status == 'confirmado' else '' }}>Confirmado</option>
+                                        <option value="en_preparacion" {{ 'selected' if order.status == 'en_preparacion' else '' }}>En Preparación</option>
+                                        <option value="listo" {{ 'selected' if order.status == 'listo' else '' }}>Listo</option>
+                                        <option value="entregado" {{ 'selected' if order.status == 'entregado' else '' }}>Entregado</option>
+                                        <option value="cancelado" {{ 'selected' if order.status == 'cancelado' else '' }}>Cancelado</option>
+                                    </select>
+                                </td>
+                                <td>{{ order.created_at.strftime('%d/%m %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top productos -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Top Productos</h6>
+            </div>
+            <div class="card-body">
+                {% for nombre, total in top_productos %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>{{ nombre }}</span>
+                    <span class="badge bg-rosa">{{ total }}</span>
+                </div>
+                {% endfor %}
+                {% if not top_productos %}
+                <p class="text-muted small">Sin datos aún.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar cambios en los selectores de estado
+    document.querySelectorAll('.status-select').forEach(function(select) {
+        select.addEventListener('change', function() {
+            const orderId = this.getAttribute('data-order-id');
+            const newStatus = this.value;
+
+            console.log('Cambio detectado:', orderId, newStatus); // Debug
+
+            // Deshabilitar el select durante la petición
+            this.disabled = true;
+            const originalValue = this.value;
+
+            // Usar XMLHttpRequest para mejor compatibilidad con sesiones Flask
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `/admin/pedidos/${orderId}/status`, true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    try {
+                        if (xhr.status === 200) {
+                            const data = JSON.parse(xhr.responseText);
+                            if (data.success) {
+                                showToast(data.message, 'success');
+                            } else {
+                                // Revertir el cambio
+                                select.value = originalValue;
+                                showToast(data.message || 'Error al actualizar el estado', 'danger');
+                            }
+                        } else if (xhr.status === 302) {
+                            // Redirección, probablemente sesión expirada
+                            select.value = originalValue;
+                            showToast('Sesión expirada. Recarga la página e inicia sesión nuevamente.', 'danger');
+                        } else {
+                            // Error HTTP
+                            select.value = originalValue;
+                            showToast('Error del servidor: ' + xhr.status, 'danger');
+                        }
+                    } catch (e) {
+                        console.error('Error parsing response:', e);
+                        select.value = originalValue;
+                        showToast('Error al procesar la respuesta del servidor', 'danger');
+                    } finally {
+                        // Re-habilitar el select
+                        select.disabled = false;
+                    }
+                }
+            };
+
+            xhr.onerror = function() {
+                console.error('Network error');
+                select.value = originalValue;
+                select.disabled = false;
+                showToast('Error de conexión', 'danger');
+            };
+
+            // Enviar la petición
+            xhr.send(`status=${encodeURIComponent(newStatus)}&ajax=1`);
+        });
+    });
+});
+
+function showToast(message, type) {
+    // Crear toast de Bootstrap
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+    toastContainer.innerHTML = `
+        <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toastContainer);
+
+    const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
+    toast.show();
+
+    // Remover el toast después de que se oculte
+    toastContainer.addEventListener('hidden.bs.toast', function() {
+        document.body.removeChild(toastContainer);
+    });
+}
+</script>
+{% endblock %}

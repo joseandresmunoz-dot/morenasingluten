@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Morena Sin Gluten{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260418-4') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-morena sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('shop.index') }}">
+                <img src="{{ url_for('brand_image', filename='logo_frente.png') }}" alt="Morena Sin Gluten" class="brand-logo">
+                <span>Morena Sin Gluten</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navMain">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('shop.index') }}">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('shop.products') }}">Productos</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="{{ url_for('shop.cart') }}">
+                            <i class="bi bi-cart3"></i> Carrito
+                            {% if cart_count > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-rosa">
+                                {{ cart_count }}
+                            </span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            {% if current_user.avatar_url %}
+                            <img src="{{ current_user.avatar_url }}" class="rounded-circle" width="24" height="24" alt="" referrerpolicy="no-referrer">
+                            {% else %}
+                            <i class="bi bi-person-circle"></i>
+                            {% endif %}
+                            {{ current_user.nombre }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('shop.my_orders') }}"><i class="bi bi-bag"></i> Mis Pedidos</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('shop.my_coupons') }}"><i class="bi bi-ticket-perforated"></i> Mis Cupones</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.complete_profile') }}"><i class="bi bi-person"></i> Mi Perfil</a></li>
+                            {% if current_user.is_admin %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-speedometer2"></i> Panel Admin</a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}"><i class="bi bi-person"></i> Ingresar</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-morena mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5><i class="bi bi-heart-fill text-rosa"></i> Morena Sin Gluten</h5>
+                    <p class="text-muted">Productos sin gluten elaborados con amor y dedicación.</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Contacto</h5>
+                    <p class="text-muted">
+                        <i class="bi bi-whatsapp"></i>
+                        <a href="https://wa.me/5492966355530" target="_blank" class="text-decoration-none">+54 9 2966 355530</a>
+                    </p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Pagos</h5>
+                    <p class="text-muted">
+                        <i class="bi bi-credit-card"></i> Mercado Pago<br>
+                        Alias: <strong>lacocinaceliaco</strong><br>
+                        Titular: Ana Carolina Iannovelli
+                    </p>
+                </div>
+            </div>
+            <hr>
+            <p class="text-center text-muted mb-1">&copy; {{ now().year if now is defined else '2026' }} Morena Sin Gluten. Todos los derechos reservados.</p>
+            <p class="text-center mb-0 small">
+                Software desarrollado por
+                <a href="https://creandosoluciones.ar" target="_blank" rel="noopener">Creando Soluciones</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <a href="{{ url_for('shop.checkout') }}" class="floating-cart d-flex align-items-center justify-content-center{% if cart_count == 0 %} d-none{% endif %}" aria-label="Ir al checkout">
+        <span class="floating-cart-badge">{{ cart_count }}</span>
+        <i class="bi bi-cart3"></i>
+    </a>
+    <a href="https://wa.me/5492966355530" class="whatsapp-float d-flex align-items-center justify-content-center" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+        <i class="bi bi-whatsapp"></i>
+    </a>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,76 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Cupones - Admin{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Cupones</h3>
+    <a href="{{ url_for('admin.coupon_new') }}" class="btn btn-morena"><i class="bi bi-plus-lg"></i> Nuevo Cupón</a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>Usos</th>
+                        <th>Válido</th>
+                        <th>Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for coupon in coupons %}
+                    <tr>
+                        <td><strong>{{ coupon.codigo }}</strong><br><small class="text-muted">{{ coupon.descripcion or '' }}</small></td>
+                        <td>
+                            {% if coupon.tipo == 'porcentaje' %}
+                            <span class="badge bg-info">{{ coupon.valor }}%</span>
+                            {% elif coupon.tipo == 'monto_fijo' %}
+                            <span class="badge bg-success">${{ "%.0f"|format(coupon.valor) }}</span>
+                            {% else %}
+                            <span class="badge bg-warning">Envío gratis</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ coupon.valor }}</td>
+                        <td>{{ coupon.usos_actuales }}/{{ coupon.max_usos or '∞' }}</td>
+                        <td>
+                            {% if coupon.fecha_inicio or coupon.fecha_fin %}
+                            <small>
+                                {% if coupon.fecha_inicio %}Desde: {{ coupon.fecha_inicio.strftime('%d/%m/%Y') }}<br>{% endif %}
+                                {% if coupon.fecha_fin %}Hasta: {{ coupon.fecha_fin.strftime('%d/%m/%Y') }}{% endif %}
+                            </small>
+                            {% else %}
+                            Sin límite
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if coupon.activo else 'danger' }}">{{ 'Activo' if coupon.activo else 'Inactivo' }}</span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.coupon_edit', coupon_id=coupon.id) }}" class="btn btn-sm btn-outline-primary me-1">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('admin.coupon_toggle', coupon_id=coupon.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-{{ 'danger' if coupon.activo else 'success' }}">
+                                    {{ 'Desactivar' if coupon.activo else 'Activar' }}
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin.coupon_delete', coupon_id=coupon.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este cupón de forma permanente?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    Eliminar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+{% block title %}Carrito - Morena Sin Gluten{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="section-title mb-4"><i class="bi bi-cart3"></i> Tu Carrito</h2>
+
+    {% if items %}
+    <div class="row">
+        <div class="col-lg-8">
+            {% for item in items %}
+            <div class="card card-morena mb-3 cart-item-card">
+                <div class="card-body">
+                    <div class="row align-items-center gx-2 gy-2 cart-item-row">
+                        <div class="col-3 col-sm-2 cart-item-image">
+                            {% if item.product.imagen_principal %}
+                            <img src="{{ item.product.imagen_principal }}" class="img-cover img-square-60 rounded" alt="{{ item.product.nombre }}">
+                            {% else %}
+                            <div class="bg-rosa-light rounded d-flex align-items-center justify-content-center" style="height: 60px;">
+                                <i class="bi bi-cake2 text-rosa"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-9 col-sm-4 cart-item-details">
+                            <h6 class="mb-1 text-break">{{ item.product.nombre }}</h6>
+                            {% if item.personalizacion %}
+                            <small class="text-muted d-block text-break">
+                                {% for grupo, opciones in item.personalizacion.items() %}
+                                <em>{{ grupo }}:</em> {% for o in opciones %}{{ o.nombre }}{% if o.cantidad is defined and o.cantidad > 1 %} x{{ o.cantidad }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}<br>
+                                {% endfor %}
+                            </small>
+                            {% endif %}
+                            <small class="text-muted d-block">${{ "%.2f"|format(item.precio) }} c/u</small>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 d-flex justify-content-center">
+                            <div class="quantity-control text-center">
+                                <form method="POST" action="{{ url_for('shop.update_cart') }}" class="d-flex align-items-center justify-content-center gap-2">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="index" value="{{ loop.index0 }}">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm qty-action qty-decrement" aria-label="Disminuir cantidad"><i class="bi bi-chevron-down"></i></button>
+                                    <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1" max="50" class="form-control form-control-sm cart-quantity-input text-center" style="width: 70px;" data-index="{{ loop.index0 }}" data-price="{{ "%.2f"|format(item.precio) }}" aria-label="Cantidad de {{ item.product.nombre }}">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm qty-action qty-increment" aria-label="Aumentar cantidad"><i class="bi bi-chevron-up"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3 text-sm-end">
+                            <strong class="cart-item-subtotal">${{ "%.2f"|format(item.subtotal) }}</strong>
+                        </div>
+                        <div class="col-6 col-sm-1 text-sm-end">
+                            <form method="POST" action="{{ url_for('shop.remove_from_cart') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="index" value="{{ loop.index0 }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Cupón -->
+            <div class="card card-morena mb-3">
+                <div class="card-body">
+                    <h6 class="mb-2"><i class="bi bi-tag"></i> ¿Tenés un cupón?</h6>
+                    {% if session.get('coupon_code') %}
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-success">{{ session.get('coupon_code') }}</span>
+                        <form method="POST" action="{{ url_for('shop.remove_coupon') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Quitar</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">Seleccioná uno de tus cupones para aplicarlo automáticamente.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('shop.clear_cart') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash3"></i> Vaciar carrito</button>
+            </form>
+
+            {% if available_coupons and not session.get('coupon_id') %}
+            <div class="card card-morena mt-3 mb-3">
+                <div class="card-body">
+                    <h6 class="mb-3">Tus cupones disponibles</h6>
+                    {% for c in available_coupons %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                        <div>
+                            <strong>{{ c.codigo }}</strong>
+                            <br>
+                            <small class="text-muted">
+                                {% if c.tipo == 'porcentaje' %}{{ "%.0f"|format(c.valor) }}% de descuento
+                                {% elif c.tipo == 'monto_fijo' %}-${{ "%.0f"|format(c.valor) }}
+                                {% endif %}
+                            </small>
+                            {% if c.fecha_fin %}
+                            <br><small class="text-danger"><i class="bi bi-clock"></i> Vence: {{ c.fecha_fin.strftime('%d/%m/%Y') }}</small>
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{{ url_for('shop.apply_coupon') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="coupon_id" value="{{ c.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-success">Usar</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Resumen -->
+        <div class="col-lg-4">
+            <div class="card card-morena sticky-top" style="top: 80px;">
+                <div class="card-body">
+                    <h5 class="mb-3">Resumen</h5>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span id="cart-subtotal" data-value="{{ "%.2f"|format(subtotal) }}">${{ "%.2f"|format(subtotal) }}</span>
+                    </div>
+
+                    {% if discount_rules %}
+                    {% for d in discount_rules %}
+                    <div class="d-flex justify-content-between mb-1 text-success">
+                        <small>{{ d.nombre }}</small>
+                        <small>-${{ "%.2f"|format(d.descuento) }}</small>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold mb-3">
+                        <span>Total estimado</span>
+                        <span id="cart-total" class="precio" data-discount="{{ "%.2f"|format(descuento_reglas) }}">${{ "%.2f"|format(subtotal - descuento_reglas) }}</span>
+                    </div>
+
+                    <!-- Recordatorio seña -->
+                    <div class="alert alert-warning small mb-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Recordá:</strong> Para confirmar tu pedido debés abonar el <strong>50% como seña</strong>. El otro 50% lo abonás al retirar.
+                        <hr class="my-2">
+                        <strong>Seña estimada: ${{ "%.2f"|format((subtotal - descuento_reglas) / 2) }}</strong><br>
+                        <small>Alias Mercado Pago: <strong>lacocinaceliaco</strong></small><br>
+                        <small>Titular: Ana Carolina Iannovelli</small>
+                    </div>
+
+                    <a href="{{ url_for('shop.checkout') }}" class="btn btn-morena w-100" id="checkoutBtn"
+                       {% if show_wheel %}onclick="event.preventDefault(); showPrizeWheel();"{% endif %}>
+                        <i class="bi bi-bag-check"></i> Ir al Checkout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    const qtyInputs = document.querySelectorAll('.cart-quantity-input');
+    const cartSubtotalEl = document.getElementById('cart-subtotal');
+    const cartTotalEl = document.getElementById('cart-total');
+
+    const formatMoney = amount => Number(amount).toFixed(2);
+    const parseNumber = value => {
+        if (typeof value === 'number') return value;
+        const cleaned = String(value).replace(/[^0-9.-]/g, '');
+        return parseFloat(cleaned) || 0;
+    };
+
+    const updateTotals = () => {
+        let subtotal = 0;
+        qtyInputs.forEach(input => {
+            const quantity = Math.max(1, Number(input.value) || 1);
+            const price = parseNumber(input.dataset.price);
+            subtotal += price * quantity;
+            const row = input.closest('.card-body');
+            const subtotalCell = row && row.querySelector('.cart-item-subtotal');
+            if (subtotalCell) {
+                subtotalCell.textContent = '$' + formatMoney(price * quantity);
+            }
+        });
+        if (cartSubtotalEl) {
+            cartSubtotalEl.textContent = '$' + formatMoney(subtotal);
+            cartSubtotalEl.dataset.value = subtotal.toFixed(2);
+        }
+        if (cartTotalEl) {
+            const discount = parseNumber(cartTotalEl.dataset.discount || 0);
+            cartTotalEl.textContent = '$' + formatMoney(Math.max(subtotal - discount, 0));
+        }
+    };
+
+    const debounce = (fn, delay = 300) => {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => fn(...args), delay);
+        };
+    };
+
+    const persistQuantity = debounce(input => {
+        const form = input.closest('form');
+        if (!form) return;
+        const index = input.dataset.index;
+        const cantidad = Math.max(1, Number(input.value) || 1);
+        const csrfInput = form.querySelector('input[name="csrf_token"]');
+        const csrfToken = csrfInput ? csrfInput.value : '';
+        fetch('{{ url_for("shop.update_cart") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `csrf_token=${encodeURIComponent(csrfToken)}&index=${encodeURIComponent(index)}&cantidad=${encodeURIComponent(cantidad)}`,
+            credentials: 'same-origin'
+        }).catch(() => {});
+    }, 400);
+
+    const changeQuantity = (input, delta) => {
+        const current = Number(input.value) || 1;
+        input.value = Math.max(1, current + delta);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    qtyInputs.forEach(input => {
+        const form = input.closest('form');
+        const hiddenIndex = form && form.querySelector('input[name="index"]');
+        if (hiddenIndex && hiddenIndex.value !== undefined) {
+            input.dataset.index = hiddenIndex.value;
+        }
+
+        input.addEventListener('input', event => {
+            const target = event.target;
+            if (target.value === '' || Number(target.value) < 1) {
+                target.value = 1;
+            }
+            updateTotals();
+            persistQuantity(target);
+        });
+    });
+
+    document.querySelectorAll('.qty-increment').forEach(button => {
+        button.addEventListener('click', () => {
+            const input = button.closest('form').querySelector('.cart-quantity-input');
+            if (input) changeQuantity(input, 1);
+        });
+    });
+
+    document.querySelectorAll('.qty-decrement').forEach(button => {
+        button.addEventListener('click', () => {
+            const input = button.closest('form').querySelector('.cart-quantity-input');
+            if (input) changeQuantity(input, -1);
+        });
+    });
+
+    if (qtyInputs.length) {
+        updateTotals();
+    }
+})();
+</script>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-cart-x text-muted" style="font-size: 4rem;"></i>
+        <p class="text-muted mt-3">Tu carrito está vacío.</p>
+        <a href="{{ url_for('shop.products') }}" class="btn btn-morena">Ver Productos</a>
+    </div>
+    {% endif %}
+</div>
+
+{% if show_wheel %}
+<!-- Modal Rueda de Premios -->
+<div class="modal fade" id="prizeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-rosa text-white">
+                <h5 class="modal-title"><i class="bi bi-stars"></i> ¡Rueda de Premios!</h5>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-2">¡Tus compras te ganaron un giro!</p>
+                <div class="position-relative d-inline-block">
+                    <canvas id="prizeWheel" width="280" height="280"></canvas>
+                    <img src="{{ url_for('brand_image', filename='favicon-32x32.png') }}" alt="Logo Muffin"
+                         style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:100px;height:100px;object-fit:contain;pointer-events:none;z-index:5;border-radius:50%;"/>
+                    <div style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); font-size: 1.5rem; z-index: 10;">▼</div>
+                </div>
+                <br>
+                <button id="spinBtn" class="btn btn-morena btn-lg mt-2" onclick="spinWheel()">
+                    <i class="bi bi-arrow-clockwise"></i> ¡Girar!
+                </button>
+                <div id="prizeResult" class="mt-3 d-none">
+                    <h4 id="prizeText" class="text-rosa"></h4>
+                    <div id="prizeCouponInfo" class="d-none alert alert-success mt-2">
+                        <p class="mb-1"><strong>🎁 ¡Ganaste un cupón!</strong></p>
+                        <p class="mb-1">Código: <strong id="couponCode" class="fs-5"></strong></p>
+                        <p class="mb-1"><small><i class="bi bi-clock"></i> Válido por 7 días. Vence: <strong id="couponExpiry"></strong></small></p>
+                        <p class="mb-0"><small>Tu cupón queda guardado para tu próxima compra y no se aplica en esta orden.</small></p>
+                    </div>
+                    <p id="prizeNoPrize" class="d-none text-muted">¡La próxima será! Seguí comprando.</p>
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-arrow-left"></i> Volver al Carrito
+                        </button>
+                        <a href="{{ url_for('shop.checkout') }}" class="btn btn-morena">
+                            <i class="bi bi-bag-check"></i> Ir al Checkout
+                        </a>
+                        <button id="wheelContinueBtn" type="button" class="btn btn-morena d-none">
+                            Continuar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+const segments = {{ segments|tojson }};
+let canvas, ctx, cx, cy, radius = 130, currentAngle = 0;
+let segmentRanges = [];
+
+function buildSegmentRanges() {
+    const totalWeight = segments.reduce((sum, s) => sum + (s.probabilidad || 1), 0);
+    let start = 0;
+    segmentRanges = segments.map(s => {
+        const angle = 2 * Math.PI * ((s.probabilidad || 1) / totalWeight);
+        const range = { start, end: start + angle };
+        start += angle;
+        return range;
+    });
+}
+
+function showPrizeWheel() {
+    buildSegmentRanges();
+    canvas = document.getElementById('prizeWheel');
+    ctx = canvas.getContext('2d');
+    cx = canvas.width / 2;
+    cy = canvas.height / 2;
+    drawWheel(0);
+    new bootstrap.Modal(document.getElementById('prizeModal')).show();
+    console.log('[rueda] segmentos carrito', segments);
+}
+
+function drawWheel(rotation) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const n = segments.length, arc = (2 * Math.PI) / n;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius + 4, 0, 2 * Math.PI);
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = '#8B4513';
+    ctx.fill();
+    ctx.restore();
+
+    for (let i = 0; i < n; i++) {
+        const range = segmentRanges[i] || { start: i * ((2 * Math.PI) / n), end: (i + 1) * ((2 * Math.PI) / n) };
+        const sa = rotation + range.start;
+        const ea = rotation + range.end;
+        ctx.beginPath(); ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, sa, ea); ctx.closePath();
+        ctx.fillStyle = segments[i].color; ctx.fill();
+        ctx.strokeStyle = '#FFF8F0'; ctx.lineWidth = 2; ctx.stroke();
+
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(sa + (ea - sa) / 2);
+        ctx.textAlign = 'right'; ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px Poppins, sans-serif';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 3;
+        const text = segments[i].texto, maxW = radius - 25;
+        if (ctx.measureText(text).width > maxW) {
+            const words = text.split(' '); let l1 = '', l2 = '';
+            for (const w of words) {
+                if (ctx.measureText(l1 + ' ' + w).width < maxW) l1 += (l1 ? ' ' : '') + w;
+                else l2 += (l2 ? ' ' : '') + w;
+            }
+            ctx.fillText(l1, radius - 15, -4); ctx.fillText(l2, radius - 15, 10);
+        } else { ctx.fillText(text, radius - 15, 4); }
+        ctx.restore();
+    }
+
+    ctx.beginPath(); ctx.arc(cx, cy, 22, 0, 2 * Math.PI);
+    ctx.fillStyle = '#C4756E'; ctx.fill();
+    ctx.strokeStyle = '#FFF8F0'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 18px Poppins, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🧁', cx, cy);
+}
+
+function spinWheel() {
+    const btn = document.getElementById('spinBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Girando...';
+
+    fetch('{{ url_for("shop.apply_prize") }}', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' },
+        body: JSON.stringify({})
+    })
+    .then(r => {
+        return r.text().then(text => {
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (err) {
+                throw new Error(text || 'Error en la rueda de premios');
+            }
+            if (!r.ok) {
+                throw new Error(data.error || 'Error en la rueda de premios');
+            }
+            return data;
+        });
+    })
+    .then(data => {
+        console.log('[rueda] premio backend', data);
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        const n = segments.length;
+        let idx = data.segment_id ? segments.findIndex(s => s.id === data.segment_id) : 0;
+        console.log('[rueda] segmento frontend', segments[idx] || null);
+        if (idx < 0) idx = 0;
+        const range = segmentRanges[idx] || { start: idx * ((2 * Math.PI) / n), end: (idx + 1) * ((2 * Math.PI) / n) };
+        const segCenter = range.start + (range.end - range.start) / 2;
+        const target = (3 * Math.PI / 2) - segCenter + (2 * Math.PI * (6 + Math.random() * 3));
+        const duration = 5000, startTime = performance.now(), startAng = currentAngle;
+
+        function animate(now) {
+            const t = Math.min((now - startTime) / duration, 1);
+            currentAngle = startAng + target * (1 - Math.pow(1 - t, 3));
+            drawWheel(currentAngle);
+            if (t < 1) { requestAnimationFrame(animate); return; }
+
+            btn.classList.add('d-none');
+            document.getElementById('prizeResult').classList.remove('d-none');
+            document.getElementById('prizeText').textContent = '🎉 ' + data.texto;
+
+            if (data.tiene_cupon) {
+                document.getElementById('prizeCouponInfo').classList.remove('d-none');
+                document.getElementById('couponCode').textContent = data.cupon;
+                if (data.vencimiento) {
+                    document.getElementById('couponExpiry').textContent = data.vencimiento;
+                }
+            } else if (data.tipo === 'sin_premio') {
+                document.getElementById('prizeNoPrize').classList.remove('d-none');
+            }
+
+            const continueBtn = document.getElementById('wheelContinueBtn');
+            if (continueBtn) {
+                continueBtn.classList.remove('d-none');
+                continueBtn.addEventListener('click', () => {
+                    const modalEl = document.getElementById('prizeModal');
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                    window.location.href = '{{ url_for('shop.checkout') }}';
+                }, { once: true });
+            }
+
+        }
+        requestAnimationFrame(animate);
+    })
+    .catch((error) => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> ¡Girar!';
+        alert(error.message || 'Error, intentá de nuevo.');
+    });
+}
+</script>
+{% endif %}
+{% endblock %}

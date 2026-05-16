@@ -1,0 +1,152 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Rueda de Premios - Admin{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-stars"></i> Rueda de Premios</h3>
+
+<!-- Configuración -->
+<div class="card mb-4">
+    <div class="card-header"><h6 class="mb-0">Configuración</h6></div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.prize_wheel_config') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Monto mínimo acumulado ($) para activar</label>
+                    <input type="number" name="monto_minimo" class="form-control" step="100" min="0"
+                        value="{{ wheel.monto_minimo_activacion if wheel else 10000 }}">
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" name="activa" id="activa"
+                            {% if wheel and wheel.activa %}checked{% endif %}>
+                        <label class="form-check-label" for="activa">Rueda activa</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-morena">Guardar Configuración</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if wheel %}
+<!-- Segmentos -->
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header"><h6 class="mb-0">Agregar Segmento</h6></div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.prize_wheel_add_segment') }}" id="wheelSegmentForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-2">
+                        <label class="form-label">Texto</label>
+                        <input type="text" name="texto" id="segmento-texto" class="form-control" placeholder="Se completa automáticamente">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Tipo</label>
+                        <select name="tipo" id="segmento-tipo" class="form-select">
+                            <option value="descuento_porcentaje">Descuento %</option>
+                            <option value="descuento_fijo">Descuento $</option>
+                            <option value="producto_gratis">Producto gratis</option>
+                            <option value="sin_premio">Sin premio</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Valor</label>
+                        <input type="number" name="valor" id="segmento-valor" class="form-control" step="0.01" min="0" value="0">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Color</label>
+                            <input type="color" name="color" class="form-control form-control-color" value="#8B4513">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Probabilidad</label>
+                            <input type="number" name="probabilidad" class="form-control" value="1" min="1">
+                            <small class="text-muted">Peso relativo</small>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-morena btn-sm w-100">Agregar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header"><h6 class="mb-0">Segmentos de la Rueda</h6></div>
+            <div class="card-body">
+                {% for seg in wheel.segments.all() %}
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded" style="background: {{ seg.color }}22;">
+                    <div>
+                        <span class="badge" style="background-color: {{ seg.color }};">{{ seg.texto }}</span>
+                        <small class="text-muted ms-2">
+                            {{ seg.tipo|replace('_',' ')|title }}
+                            {% if seg.valor > 0 %}- {{ seg.valor }}{% endif %}
+                            | Prob: {{ seg.probabilidad }}
+                            {% if segment_spin_counts.get(seg.id, 0) > 0 %}
+                                | Usado en {{ segment_spin_counts.get(seg.id) }} giro(s)
+                            {% endif %}
+                        </small>
+                        {% if segment_spin_counts.get(seg.id, 0) > 0 %}
+                        <div><small class="text-danger d-block">Este segmento ya fue usado; la eliminación borrará los giros asociados.</small></div>
+                        {% endif %}
+                    </div>
+                    <form method="POST" action="{{ url_for('admin.prize_wheel_delete_segment', seg_id=seg.id) }}" class="d-flex align-items-center gap-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% if segment_spin_counts.get(seg.id, 0) > 0 %}
+                        <input type="hidden" name="force" value="1">
+                        {% endif %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" {% if segment_spin_counts.get(seg.id, 0) > 0 %}title="Forzar eliminación junto con giros asociados"{% endif %}>
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+
+                {% if not wheel.segments.count() %}
+                <p class="text-muted text-center">No hay segmentos. Agregá al menos uno.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+<script>
+(function() {
+    const form = document.getElementById('wheelSegmentForm');
+    if (!form) return;
+    const tipoInput = document.getElementById('segmento-tipo');
+    const valorInput = document.getElementById('segmento-valor');
+    const textoInput = document.getElementById('segmento-texto');
+
+    const syncTexto = () => {
+        const tipo = tipoInput ? tipoInput.value : 'sin_premio';
+        const valor = Number(valorInput ? valorInput.value : 0) || 0;
+        if (!textoInput) return;
+        if (tipo === 'descuento_porcentaje') {
+            textoInput.value = `${valor}% descuento`;
+            return;
+        }
+        if (tipo === 'descuento_fijo') {
+            textoInput.value = `$${valor.toFixed(2)} descuento`;
+            return;
+        }
+        if (tipo === 'producto_gratis') {
+            textoInput.value = 'Producto gratis';
+            return;
+        }
+        textoInput.value = 'Sin premio';
+    };
+
+    if (tipoInput) {
+        tipoInput.addEventListener('change', syncTexto);
+    }
+    if (valorInput) {
+        valorInput.addEventListener('input', syncTexto);
+    }
+    syncTexto();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ 'Editar' if coupon else 'Nuevo' }} Cupón - Admin{% endblock %}
+{% block content %}
+<h3 class="mb-4">{{ 'Editar' if coupon else 'Nuevo' }} Cupón</h3>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Código *</label>
+                    <input type="text" name="codigo" class="form-control" placeholder="Ej: DESCUENTO10" required style="text-transform: uppercase;" value="{{ coupon.codigo if coupon else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tipo *</label>
+                    <select name="tipo" class="form-select" required>
+                        <option value="porcentaje" {{ 'selected' if coupon and coupon.tipo == 'porcentaje' }}>Porcentaje (%)</option>
+                        <option value="monto_fijo" {{ 'selected' if coupon and coupon.tipo == 'monto_fijo' }}>Monto Fijo ($)</option>
+                        <option value="envio_gratis" {{ 'selected' if coupon and coupon.tipo == 'envio_gratis' }}>Envío Gratis</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Valor</label>
+                    <input type="number" name="valor" class="form-control" step="0.01" min="0" value="{{ coupon.valor if coupon else 0 }}">
+                </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+                <div class="col-md-12">
+                    <label class="form-label">Descripción</label>
+                    <input type="text" name="descripcion" class="form-control" placeholder="Descripción opcional" value="{{ coupon.descripcion if coupon and coupon.descripcion else '' }}">
+                </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+                <div class="col-md-4">
+                    <label class="form-label">Mínimo de compra ($)</label>
+                    <input type="number" name="minimo_compra" class="form-control" step="0.01" min="0" value="{{ coupon.minimo_compra if coupon else 0 }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Máximo de usos</label>
+                    <input type="number" name="max_usos" class="form-control" min="1" placeholder="Vacío = ilimitado" value="{{ coupon.max_usos if coupon and coupon.max_usos else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" type="checkbox" name="solo_primer_pedido" id="solo_primer_pedido" {{ 'checked' if coupon and coupon.solo_primer_pedido }}>
+                        <label class="form-check-label" for="solo_primer_pedido">Solo primer pedido</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+                <div class="col-md-6">
+                    <label class="form-label">Fecha inicio</label>
+                    <input type="datetime-local" name="fecha_inicio" class="form-control" value="{{ coupon.fecha_inicio.strftime('%Y-%m-%dT%H:%M') if coupon and coupon.fecha_inicio else '' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Fecha fin (vencimiento)</label>
+                    <input type="datetime-local" name="fecha_fin" class="form-control" value="{{ coupon.fecha_fin.strftime('%Y-%m-%dT%H:%M') if coupon and coupon.fecha_fin else '' }}">
+                </div>
+            </div>
+
+            {% if not coupon %}
+            <div class="mt-3">
+                <label class="form-label">Asignar a clientes específicos (emails separados por coma)</label>
+                <textarea name="user_emails" class="form-control" rows="2" placeholder="Dejá vacío para que cualquiera pueda usarlo"></textarea>
+                <small class="text-muted">Clientes registrados:
+                    {% for u in users %}{{ u.email }}{% if not loop.last %}, {% endif %}{% endfor %}
+                </small>
+            </div>
+            {% endif %}
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-morena"><i class="bi bi-check-lg"></i> {{ 'Guardar Cambios' if coupon else 'Crear Cupón' }}</button>
+                <a href="{{ url_for('admin.coupons') }}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

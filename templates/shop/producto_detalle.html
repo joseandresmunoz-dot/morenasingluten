@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}{{ product.nombre }} - Morena Sin Gluten{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('shop.index') }}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('shop.products') }}">Productos</a></li>
+            <li class="breadcrumb-item active">{{ product.nombre }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            {% set imagenes = product.todas_las_imagenes %}
+            {% if imagenes|length > 1 %}
+            <div id="carouselProducto" class="carousel slide shadow rounded overflow-hidden" data-bs-ride="carousel">
+                <div class="carousel-indicators">
+                    {% for img in imagenes %}
+                    <button type="button" data-bs-target="#carouselProducto" data-bs-slide-to="{{ loop.index0 }}"
+                            {% if loop.first %}class="active"{% endif %}></button>
+                    {% endfor %}
+                </div>
+                <div class="carousel-inner">
+                    {% for img in imagenes %}
+                    <div class="carousel-item {% if loop.first %}active{% endif %}">
+                        <div class="product-img-wrapper" style="height: 450px;">
+                            <img src="{{ img.url }}" alt="{{ product.nombre }}">
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselProducto" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselProducto" data-bs-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                </button>
+            </div>
+            <!-- Miniaturas -->
+            <div class="d-flex gap-2 mt-2">
+                {% for img in imagenes %}
+                <img src="{{ img.url }}" class="img-thumbnail img-cover img-square-70" style="cursor: pointer;"
+                     onclick="document.querySelector('#carouselProducto').querySelector('.carousel-item.active').classList.remove('active'); document.querySelectorAll('#carouselProducto .carousel-item')[{{ loop.index0 }}].classList.add('active');"
+                     data-bs-target="#carouselProducto" data-bs-slide-to="{{ loop.index0 }}">
+                {% endfor %}
+            </div>
+            {% elif product.imagen_principal %}
+            <div class="product-img-wrapper shadow" style="height: 450px;">
+                <img src="{{ product.imagen_principal }}" alt="{{ product.nombre }}">
+            </div>
+            {% else %}
+            <div class="bg-rosa-light d-flex align-items-center justify-content-center rounded" style="height: 400px;">
+                <i class="bi bi-cake2 text-rosa" style="font-size: 5rem;"></i>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-6">
+            <h2>{{ product.nombre }}</h2>
+
+            {% if product.category %}
+            <span class="badge bg-secondary mb-2">{{ product.category.nombre }}</span>
+            {% endif %}
+            {% for tag in product.tags %}
+            <span class="badge" style="background-color: {{ tag.color }};">{{ tag.nombre }}</span>
+            {% endfor %}
+
+            {% if product.descripcion %}
+            <p class="mt-3 text-muted">{{ product.descripcion }}</p>
+            {% endif %}
+
+            {% if current_user.is_authenticated %}
+            <h3 class="precio mt-3">${{ "%.2f"|format(product.precio) }}</h3>
+
+            <form method="POST" action="{{ url_for('shop.add_to_cart') }}" class="mt-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+
+                {% if product.es_personalizable and customization_groups %}
+                <div class="card card-morena mb-3">
+                    <div class="card-body">
+                        <h5 class="mb-3"><i class="bi bi-sliders"></i> Personalizá tu pedido</h5>
+
+                        {% for group in customization_groups %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                {{ group.nombre }}
+                                {% if group.obligatorio %}<span class="text-danger">*</span>{% endif %}
+                                <small class="text-muted">(mín: {{ group.min_selecciones }}, máx: {{ group.max_selecciones }})</small>
+                            </label>
+
+                            <!-- Toggle: Clásicas vs Personalizado -->
+                            <div class="btn-group w-100 mb-3" role="group" id="modeToggle_{{ group.id }}">
+                                <button type="button" class="btn btn-outline-secondary active preset-toggle"
+                                        data-group-id="{{ group.id }}" data-mode="clasicas"
+                                        onclick="setPreset({{ group.id }})">
+                                    🧁 Surtidas Clásicas
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary preset-toggle"
+                                        data-group-id="{{ group.id }}" data-mode="custom"
+                                        onclick="setCustom({{ group.id }})">
+                                    ✏️ Elegí las tuyas
+                                </button>
+                            </div>
+
+                            <!-- Descripción preset -->
+                            <div id="presetDesc_{{ group.id }}" class="alert alert-light text-center mb-2">
+                                <strong>Surtidas Clásicas:</strong> 2 Dulce de leche, 2 Crema Pastelera, 2 Membrillo
+                            </div>
+
+                            <!-- Selector manual (oculto por defecto) -->
+                            <div id="customSelector_{{ group.id }}" class="d-none">
+                                <div class="text-end mb-1">
+                                    <small class="text-muted">Seleccionadas: <strong id="count_group_{{ group.id }}">0</strong> / {{ group.max_selecciones }}</small>
+                                </div>
+                                {% for option in group.options.filter_by(activo=True).all() %}
+                                <div class="d-flex align-items-center justify-content-between py-1 border-bottom">
+                                    <div>
+                                        {{ option.nombre }}
+                                        {% if option.precio_extra > 0 and current_user.is_authenticated %}
+                                        <span class="text-rosa">(+${{ "%.2f"|format(option.precio_extra) }} c/u)</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary qty-btn" data-action="minus" data-target="qty_{{ option.id }}">−</button>
+                                        <input type="number" name="custom_{{ group.id }}_qty_{{ option.id }}" id="qty_{{ option.id }}"
+                                               value="0" min="0" max="{{ group.max_selecciones }}" class="form-control form-control-sm text-center qty-input"
+                                               style="width: 55px;"
+                                               data-group="group_{{ group.id }}" data-max="{{ group.max_selecciones }}"
+                                               data-option-id="{{ option.id }}" data-precio-extra="{{ option.precio_extra }}">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary qty-btn" data-action="plus" data-target="qty_{{ option.id }}">+</button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Input oculto para modo preset -->
+                            <input type="hidden" name="preset_mode_{{ group.id }}" id="presetMode_{{ group.id }}" value="clasicas">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="d-flex align-items-center gap-3 mt-3">
+                    <div>
+                        <label class="form-label">Cantidad</label>
+                        <input type="number" name="cantidad" value="1" min="1" max="50" class="form-control" style="width: 80px;">
+                    </div>
+                    <div class="flex-grow-1">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-morena w-100 btn-lg">
+                            <i class="bi bi-cart-plus"></i> Agregar al Carrito
+                        </button>
+                    </div>
+                </div>
+            </form>
+            {% else %}
+            <div class="mt-4">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-dark btn-lg">
+                    <i class="bi bi-box-arrow-in-right"></i> Iniciá sesión para ver precios
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Preset clásicas: 2 Dulce de leche (48), 2 Crema Pastelera (49), 2 Membrillo (50)
+const PRESET_CLASICAS = { '48': 2, '49': 2, '50': 2 };
+
+function setPreset(groupId) {
+    // Toggle botones
+    document.querySelectorAll(`#modeToggle_${groupId} .preset-toggle`).forEach(b => b.classList.remove('active'));
+    document.querySelector(`#modeToggle_${groupId} [data-mode="clasicas"]`).classList.add('active');
+
+    document.getElementById('presetDesc_' + groupId).classList.remove('d-none');
+    document.getElementById('customSelector_' + groupId).classList.add('d-none');
+    document.getElementById('presetMode_' + groupId).value = 'clasicas';
+
+    // Resetear inputs manuales
+    document.querySelectorAll(`#customSelector_${groupId} .qty-input`).forEach(input => {
+        input.value = 0;
+    });
+    updateGroupCount('group_' + groupId);
+}
+
+function setCustom(groupId) {
+    document.querySelectorAll(`#modeToggle_${groupId} .preset-toggle`).forEach(b => b.classList.remove('active'));
+    document.querySelector(`#modeToggle_${groupId} [data-mode="custom"]`).classList.add('active');
+
+    document.getElementById('presetDesc_' + groupId).classList.add('d-none');
+    document.getElementById('customSelector_' + groupId).classList.remove('d-none');
+    document.getElementById('presetMode_' + groupId).value = 'custom';
+}
+
+function getGroupTotal(group) {
+    let total = 0;
+    document.querySelectorAll(`.qty-input[data-group="${group}"]`).forEach(input => {
+        total += parseInt(input.value) || 0;
+    });
+    return total;
+}
+
+function updateGroupCount(group) {
+    const total = getGroupTotal(group);
+    const counter = document.getElementById('count_' + group);
+    if (counter) counter.textContent = total;
+}
+
+// Botones +/-
+document.querySelectorAll('.qty-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const input = document.getElementById(this.dataset.target);
+        const group = input.dataset.group;
+        const max = parseInt(input.dataset.max);
+        let val = parseInt(input.value) || 0;
+
+        if (this.dataset.action === 'plus') {
+            if (getGroupTotal(group) < max) {
+                input.value = val + 1;
+            } else {
+                alert(`Máximo ${max} selecciones para este grupo.`);
+            }
+        } else {
+            input.value = Math.max(0, val - 1);
+        }
+        updateGroupCount(group);
+    });
+});
+
+// Input directo
+document.querySelectorAll('.qty-input').forEach(input => {
+    input.addEventListener('change', function() {
+        const group = this.dataset.group;
+        const max = parseInt(this.dataset.max);
+        let val = parseInt(this.value) || 0;
+        if (val < 0) val = 0;
+
+        const othersTotal = getGroupTotal(group) - val;
+        if (othersTotal + val > max) {
+            val = max - othersTotal;
+            this.value = val;
+            alert(`Máximo ${max} selecciones para este grupo.`);
+        }
+        updateGroupCount(group);
+    });
+});
+</script>
+{% endblock %}

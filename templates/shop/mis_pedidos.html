@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Mis Pedidos - Morena Sin Gluten{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="section-title mb-4"><i class="bi bi-bag"></i> Mis Pedidos</h2>
+
+    <!-- Cupones disponibles -->
+    {% if available_coupons %}
+    <div class="card card-morena mb-4">
+        <div class="card-body">
+            <h5 class="mb-3"><i class="bi bi-ticket-perforated text-rosa"></i> Tus Cupones Disponibles</h5>
+            <div class="row g-3">
+                {% for coupon in available_coupons %}
+                <div class="col-md-4">
+                    <div class="card border-success h-100">
+                        <div class="card-body text-center">
+                            <div class="mb-2">
+                                {% if coupon.tipo == 'porcentaje' %}
+                                <span class="badge bg-rosa fs-5">{{ "%.0f"|format(coupon.valor) }}% OFF</span>
+                                {% elif coupon.tipo == 'monto_fijo' %}
+                                <span class="badge bg-rosa fs-5">${{ "%.0f"|format(coupon.valor) }} OFF</span>
+                                {% endif %}
+                            </div>
+                            <p class="mb-1"><strong>{{ coupon.codigo }}</strong></p>
+                            {% if coupon.descripcion %}
+                            <small class="text-muted">{{ coupon.descripcion }}</small>
+                            {% endif %}
+                            {% if coupon.fecha_fin %}
+                            <div class="mt-1">
+                                <small class="text-danger"><i class="bi bi-clock"></i> Vence: {{ coupon.fecha_fin.strftime('%d/%m/%Y') }}</small>
+                            </div>
+                            {% endif %}
+                            <hr class="my-2">
+                            <small class="text-success"><i class="bi bi-info-circle"></i> Usalo en tu próximo pedido ingresando el código en el carrito o seleccionándolo en el checkout.</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if orders %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Entrega</th>
+                    <th>Seña</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td><strong>{{ order.codigo }}</strong></td>
+                    <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>${{ "%.2f"|format(order.total) }}</td>
+                    <td>
+                        {{ (order.tipo_entrega or 'retiro')|replace('_', ' ')|title }}
+                        {% if (order.tipo_entrega or 'retiro') == 'domicilio' and order.costo_envio > 0 %}
+                        <br><small class="text-muted">Envío: ${{ "%.2f"|format(order.costo_envio) }}</small>
+                        {% endif %}
+                    </td>
+                    <td>${{ "%.2f"|format(order.senia) }}</td>
+                    <td>
+                        {% set status_colors = {
+                            'pendiente': 'warning',
+                            'senia_pagada': 'info',
+                            'confirmado': 'primary',
+                            'en_preparacion': 'secondary',
+                            'listo': 'success',
+                            'entregado': 'success',
+                            'cancelado': 'danger'
+                        } %}
+                        <span class="badge bg-{{ status_colors.get(order.status, 'secondary') }}">
+                            {{ order.status|replace('_', ' ')|title }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('shop.order_confirmation', order_id=order.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-bag-x text-muted" style="font-size: 3rem;"></i>
+        <p class="text-muted mt-3">Todavía no tenés pedidos.</p>
+        <a href="{{ url_for('shop.products') }}" class="btn btn-morena">Ver Productos</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
