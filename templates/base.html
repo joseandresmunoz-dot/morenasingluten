@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Morena Sin Gluten{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('brand_image', filename='logo_frente.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260418-4') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260516-7') }}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -97,8 +98,14 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <h5><i class="bi bi-heart-fill text-rosa"></i> Morena Sin Gluten</h5>
+                    <h5 class="d-flex align-items-center gap-2">
+                        <img src="{{ url_for('brand_image', filename='logo_frente.png') }}" alt="Morena Sin Gluten" style="height: 30px; width: auto;">
+                        Morena Sin Gluten
+                    </h5>
                     <p class="text-muted">Productos sin gluten elaborados con amor y dedicación.</p>
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-geo-alt"></i> Río Gallegos, Provincia de Santa Cruz
+                    </p>
                 </div>
                 <div class="col-md-4 mb-3">
                     <h5>Contacto</h5>
@@ -110,9 +117,10 @@
                 <div class="col-md-4 mb-3">
                     <h5>Pagos</h5>
                     <p class="text-muted">
-                        <i class="bi bi-credit-card"></i> Mercado Pago<br>
-                        Alias: <strong>lacocinaceliaco</strong><br>
-                        Titular: Ana Carolina Iannovelli
+                        <i class="bi bi-cash"></i> Efectivo<br>
+                        <i class="bi bi-bank"></i> Transferencia<br>
+                        <i class="bi bi-credit-card"></i> Tarjeta de crédito<br>
+                        <i class="bi bi-whatsapp"></i> Pedí tu link de pago por <a href="https://wa.me/5492966355530" target="_blank" class="text-decoration-none">WhatsApp</a>
                     </p>
                 </div>
             </div>

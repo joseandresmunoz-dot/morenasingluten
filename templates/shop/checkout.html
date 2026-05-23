@@ -440,12 +440,12 @@ async function spinWheel() {
         const idx = index >= 0 ? index : 0;
 
         const angle = 2 * Math.PI;
-        const targetRotation = POINTER_ANGLE - WHEEL_START_OFFSET - idx * angle / n - Math.PI / n;
+        const segCenter = segmentRanges[idx].start + (segmentRanges[idx].end - segmentRanges[idx].start) / 2;
+        const targetRotation = POINTER_ANGLE - WHEEL_START_OFFSET - segCenter;
         const startAng = wheelCurrentAngle;
         const spins = 6 + Math.random() * 3;
         const delta = normalizeAngle(targetRotation - startAng) + (2 * Math.PI * spins);
         const duration = 5000, startTime = performance.now();
-        const finalAngle = startAng + delta;
 
         function animate(now) {
             const t = Math.min((now - startTime) / duration, 1);
@@ -453,7 +453,7 @@ async function spinWheel() {
             drawWheel(ctx, cx, cy, 130, wheelSegments, segmentRanges, wheelCurrentAngle);
             if (t < 1) { requestAnimationFrame(animate); return; }
 
-            wheelCurrentAngle = finalAngle;
+            wheelCurrentAngle = targetRotation;
             drawWheel(ctx, cx, cy, 130, wheelSegments, segmentRanges, wheelCurrentAngle, idx);
 
             document.getElementById('prizeText').textContent = getPrizeMessage(data);
