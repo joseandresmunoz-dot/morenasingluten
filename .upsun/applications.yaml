@@ -30,14 +30,6 @@ applications:
                     allow: true
                     expires: 30d
 
-        mounts:
-            "uploads":
-                source: local
-                source_path: uploads
-            "images":
-                source: local
-                source_path: images
-
         variables:
             env:
                 FLASK_ENV: production
