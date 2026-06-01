@@ -6,6 +6,5 @@ __pycache__/
 venv/
 .venv/
 instance/
-uploads/
 *.pyc
 .DS_Store

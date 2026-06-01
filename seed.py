@@ -1,17 +1,17 @@
 """
 Script para inicializar la base de datos con un usuario admin
-y datos de ejemplo para Morena Sin Gluten.
+y datos reales de Morena Sin Gluten.
 
 Uso: python seed.py
 """
 from app import app
 from extensions import db
-from models import User, Category, Tag, Product, PrizeWheel, PrizeWheelSegment, CustomizationGroup, CustomizationOption
+from models import User, Category, Tag, Product, ProductImage, PrizeWheel, PrizeWheelSegment, CustomizationGroup, CustomizationOption, StoreConfig
 from decimal import Decimal
+
 
 def seed():
     with app.app_context():
-        # Crear tablas
         db.create_all()
 
         # Admin user
@@ -27,20 +27,34 @@ def seed():
             db.session.add(admin)
             print('✅ Usuario admin creado (admin@morenasingluten.com / admin123)')
 
+        # Store config
+        if not StoreConfig.query.first():
+            db.session.add(StoreConfig(envio_domicilio_costo=Decimal('4000.00')))
+            print('  💰 Configuración de tienda creada')
+
         # Categorías
         cats_data = [
-            ('Facturas', 'Facturas sin gluten frescas del día', 1),
-            ('Tortas', 'Tortas artesanales para toda ocasión', 2),
-            ('Panes', 'Panes frescos sin gluten', 3),
-            ('Box / Combos', 'Combos y boxes personalizables', 4),
-            ('Pastelería', 'Pastelería fina sin gluten', 5),
-            ('Galletitas', 'Galletitas dulces y saladas', 6),
+            ('Panificados', '', '/uploads/20260523193148915660_panificados.jpg', 0),
+            ('Facturas', 'Facturas sin gluten frescas del día', '/uploads/20260523193430384373_factutras.jpg', 1),
+            ('Tortas', 'Tortas artesanales para toda ocasión', '/uploads/20260523193236028559_tortas.jpg', 2),
+            ('Alfajores', 'Alfajores varios', '/uploads/20260523193245459871_ALFAJORES.jpg', 3),
+            ('Box / Combos', 'Combos y boxes personalizables', '/uploads/20260523193255860794_BOXCOMBOS.jpg', 4),
+            ('Empanadas', 'Empanadas varios sabores', '/uploads/20260523193307564822_EMPANADAS.jpg', 5),
+            ('Galletitas', 'Galletitas dulces', '/uploads/20260523193322979507_GALLETITAS.jpg', 6),
+            ('Budines', 'Budines de varios sabores', '/uploads/20260523193159101437_BUDINES.jpg', 0),
+            ('Canelones', 'Canelones varios sabores.\n3 unidades por porción', '/uploads/20260523193210174365_canelones.jpg', 0),
+            ('Keto low carb', 'Productos sin azúcar, elaborado con harinas de almendra o de coco y materias primas de excelente calidad. Apto Diabetico', '/uploads/20260523192846529010_keto.jpg', 0),
+            ('Pastas frescas', 'Variedades de pastas frescas', '/uploads/20260523192857932749_PASTASFRESCAS.jpg', 0),
+            ('PIZZAS Y PREPIZZAS', 'Pizzas y prepizzas', '/uploads/20260523192906690431_pizzasprepizzas.jpg', 0),
+            ('Sandwiches de miga', 'Sandwiches de miga de distintos sabores', '/uploads/20260523192915569448_SANDMIGA.jpg', 0),
+            ('Sandwiches Varios', 'Sandwiches salados', '/uploads/20260523193054715580_SANDWICHES_VARIOS.jpg', 0),
+            ('Tartas', 'Tartas dulces', '/uploads/20260523192816962841_TARTAS.jpg', 0),
         ]
 
         cats = {}
-        for nombre, desc, orden in cats_data:
+        for nombre, desc, imagen, orden in cats_data:
             if not Category.query.filter_by(nombre=nombre).first():
-                cat = Category(nombre=nombre, descripcion=desc, orden=orden)
+                cat = Category(nombre=nombre, descripcion=desc, imagen=imagen, orden=orden)
                 db.session.add(cat)
                 db.session.flush()
                 cats[nombre] = cat
@@ -50,11 +64,13 @@ def seed():
 
         # Etiquetas
         tags_data = [
+            ('Sin Gluten', '#df762a'),
             ('Sin TACC', '#4CAF50'),
-            ('Vegano', '#8BC34A'),
             ('Sin Lácteos', '#FF9800'),
             ('Nuevo', '#E91E63'),
             ('Más Vendido', '#9C27B0'),
+            ('Sin Azúcar', '#6f8ce2'),
+            ('Diabeticos', '#30c412'),
         ]
 
         tags = {}
@@ -70,102 +86,160 @@ def seed():
 
         # Productos
         products_data = [
-            ('Docena de Facturas', 'Docena de facturas sin gluten variadas', 5500, 'Facturas', True, ['Sin TACC', 'Más Vendido']),
-            ('Media Docena de Facturas', 'Media docena de facturas sin gluten', 3000, 'Facturas', True, ['Sin TACC']),
-            ('Torta de Chocolate', 'Torta de chocolate sin gluten, para 10 personas', 12000, 'Tortas', True, ['Sin TACC']),
-            ('Torta de Vainilla', 'Torta de vainilla con crema, para 10 personas', 11000, 'Tortas', True, ['Sin TACC']),
-            ('Pan de Campo', 'Pan de campo artesanal sin gluten', 3500, 'Panes', False, ['Sin TACC', 'Vegano']),
-            ('Pan Lactal', 'Pan lactal sin gluten por unidad', 4000, 'Panes', False, ['Sin TACC']),
-            ('Box Desayuno', 'Box desayuno completo personalizable', 9500, 'Box / Combos', True, ['Sin TACC', 'Nuevo']),
-            ('Box Merienda', 'Box merienda con facturas y torta', 8000, 'Box / Combos', True, ['Sin TACC']),
-            ('Alfajores x6', 'Alfajores de maicena sin gluten x6', 4500, 'Pastelería', False, ['Sin TACC', 'Más Vendido']),
-            ('Galletitas de Avena', 'Galletitas de avena sin gluten x12', 3000, 'Galletitas', False, ['Sin TACC', 'Vegano']),
+            {
+                'nombre': 'Pan Molde',
+                'descripcion': '',
+                'precio': 12000,
+                'cat_name': 'Panificados',
+                'personalizable': False,
+                'destacado': True,
+                'tags': ['Sin Gluten'],
+                'imagen': '/uploads/20260523193731840911_PAN_MOLDE.jpg',
+            },
+            {
+                'nombre': 'Facturas',
+                'descripcion': 'Facturas surtidas, podes armar tu bandeja',
+                'precio': 11500,
+                'cat_name': 'Facturas',
+                'personalizable': True,
+                'destacado': True,
+                'tags': ['Sin Gluten', 'Sin TACC', 'Más Vendido'],
+                'imagen': '/uploads/20260523200018721313_FACTURASSURTIDAS.jpg',
+            },
+            {
+                'nombre': 'Ravioles de Jamón y queso',
+                'descripcion': 'Plancha de ravioles de jamon y queso por 16 uniades',
+                'precio': 17000,
+                'cat_name': 'Pastas frescas',
+                'personalizable': False,
+                'destacado': False,
+                'tags': ['Sin Gluten', 'Sin TACC'],
+                'imagen': '/uploads/20260523210802721963_RAVIOLES.jpg',
+            },
+            {
+                'nombre': 'Ravioles de ricota y nuez',
+                'descripcion': 'Plancha de ravioles de ricota y nuez por 16 unidades',
+                'precio': 17000,
+                'cat_name': 'Pastas frescas',
+                'personalizable': False,
+                'destacado': False,
+                'tags': ['Sin Gluten', 'Sin TACC'],
+                'imagen': '/uploads/20260523210854080104_RAVIOLES.jpg',
+            },
+            {
+                'nombre': 'Ravioles de verduras',
+                'descripcion': 'Plancha de ravioles de verduras por 16 unidades',
+                'precio': 18000,
+                'cat_name': 'Pastas frescas',
+                'personalizable': False,
+                'destacado': False,
+                'tags': ['Sin Gluten', 'Sin TACC'],
+                'imagen': '/uploads/20260523210952885628_RAVIOLES.jpg',
+            },
+            {
+                'nombre': 'Sorrentinos de jamón y queso',
+                'descripcion': 'Plancha de sorrentinos de jamón y queso',
+                'precio': 17000,
+                'cat_name': 'Pastas frescas',
+                'personalizable': False,
+                'destacado': False,
+                'tags': ['Sin Gluten', 'Sin TACC'],
+                'imagen': '/uploads/20260523211422914896_SORRENTINOS.jpg',
+            },
+            {
+                'nombre': 'Sorrentinos de ricota y nuez',
+                'descripcion': 'Plancha de sorrentinos de ricota y nuez por 12 unidades',
+                'precio': 17000,
+                'cat_name': 'Pastas frescas',
+                'personalizable': False,
+                'destacado': False,
+                'tags': ['Sin Gluten', 'Sin TACC'],
+                'imagen': '/uploads/20260523211503561477_SORRENTINOS.jpg',
+            },
+            {
+                'nombre': 'Sorrentinos de verduras',
+                'descripcion': 'Plancha de sorrentinos de verduras por 12 unidades',
+                'precio': 18000,
+                'cat_name': 'Pastas frescas',
+                'personalizable': False,
+                'destacado': False,
+                'tags': ['Sin Gluten', 'Sin TACC'],
+                'imagen': '/uploads/20260523211544624501_SORRENTINOS.jpg',
+            },
         ]
 
-        for nombre, desc, precio, cat_name, personalizable, tag_names in products_data:
-            if not Product.query.filter_by(nombre=nombre).first():
+        for pd in products_data:
+            if not Product.query.filter_by(nombre=pd['nombre']).first():
                 product = Product(
-                    nombre=nombre, descripcion=desc,
-                    precio=Decimal(str(precio)),
-                    category_id=cats[cat_name].id,
-                    es_personalizable=personalizable
+                    nombre=pd['nombre'],
+                    descripcion=pd['descripcion'],
+                    precio=Decimal(str(pd['precio'])),
+                    category_id=cats[pd['cat_name']].id,
+                    es_personalizable=pd['personalizable'],
+                    destacado=pd['destacado'],
                 )
-                product.tags = [tags[t] for t in tag_names if t in tags]
+                product.tags = [tags[t] for t in pd['tags'] if t in tags]
                 db.session.add(product)
                 db.session.flush()
-                print(f'  🧁 Producto: {nombre} - ${precio}')
+                print(f'  🧁 Producto: {pd["nombre"]} - ${pd["precio"]}')
+
+                # Product image
+                img = ProductImage(product_id=product.id, url=pd['imagen'], orden=0)
+                db.session.add(img)
 
                 # Personalizaciones
-                if personalizable and 'Facturas' in nombre:
+                if pd['personalizable'] and pd['nombre'] == 'Facturas':
                     group = CustomizationGroup(
                         product_id=product.id,
                         nombre='Elegí tus facturas',
-                        min_selecciones=0,
-                        max_selecciones=12 if 'Docena' in nombre else 6,
-                        obligatorio=False
+                        min_selecciones=6,
+                        max_selecciones=6,
+                        obligatorio=True,
                     )
                     db.session.add(group)
                     db.session.flush()
-                    for opt_name in ['Medialunas', 'Cañoncitos de crema', 'Vigilantes', 'Bolas de fraile', 'Tortitas negras', 'Cremona', 'Sacramento']:
-                        db.session.add(CustomizationOption(group_id=group.id, nombre=opt_name, precio_extra=0))
-
-                elif personalizable and 'Torta' in nombre:
-                    # Grupo de relleno
-                    group = CustomizationGroup(
-                        product_id=product.id,
-                        nombre='Relleno',
-                        min_selecciones=1, max_selecciones=2,
-                        obligatorio=True
-                    )
-                    db.session.add(group)
-                    db.session.flush()
-                    for opt_name, extra in [('Dulce de leche', 0), ('Crema pastelera', 0), ('Mousse de chocolate', 200), ('Frutas frescas', 500)]:
-                        db.session.add(CustomizationOption(group_id=group.id, nombre=opt_name, precio_extra=Decimal(str(extra))))
-
-                    # Grupo decoración
-                    group2 = CustomizationGroup(
-                        product_id=product.id,
-                        nombre='Decoración',
-                        min_selecciones=0, max_selecciones=3,
-                        obligatorio=False
-                    )
-                    db.session.add(group2)
-                    db.session.flush()
-                    for opt_name, extra in [('Merengue', 0), ('Ganache de chocolate', 300), ('Fondant', 1500), ('Frutas decorativas', 500)]:
-                        db.session.add(CustomizationOption(group_id=group2.id, nombre=opt_name, precio_extra=Decimal(str(extra))))
-
-                elif personalizable and 'Box' in nombre:
-                    group = CustomizationGroup(
-                        product_id=product.id,
-                        nombre='Armá tu box',
-                        min_selecciones=3, max_selecciones=6,
-                        obligatorio=True
-                    )
-                    db.session.add(group)
-                    db.session.flush()
-                    for opt_name, extra in [('Facturas x3', 0), ('Alfajores x2', 0), ('Galletitas', 0), ('Brownie', 300), ('Torta porción', 500), ('Pan de campo', 200), ('Mermelada artesanal', 400)]:
-                        db.session.add(CustomizationOption(group_id=group.id, nombre=opt_name, precio_extra=Decimal(str(extra))))
+                    for opt_name, extra in [
+                        ('Dulce de leche', 0),
+                        ('Medialunas', 0),
+                        ('Vigilantes', 0),
+                        ('Membrillo', 0),
+                        ('Crema Pastelera', 0),
+                        ('Sacramentos', 2500),
+                        ('Cuadrado de Jamón y queso', 3800),
+                    ]:
+                        db.session.add(CustomizationOption(
+                            group_id=group.id, nombre=opt_name,
+                            precio_extra=Decimal(str(extra))
+                        ))
 
         # Rueda de premios
         if not PrizeWheel.query.first():
-            wheel = PrizeWheel(nombre='Rueda de Premios', monto_minimo_activacion=15000, activa=True)
+            wheel = PrizeWheel(
+                nombre='Rueda de Premios',
+                monto_minimo_activacion=Decimal('25000.00'),
+                activa=False,
+            )
             db.session.add(wheel)
             db.session.flush()
 
             segments = [
-                ('10% OFF', 'descuento_porcentaje', 10, '#C4756E', 3),
-                ('15% OFF', 'descuento_porcentaje', 15, '#8B4513', 2),
-                ('$500 OFF', 'descuento_fijo', 500, '#4CAF50', 2),
-                ('Seguí participando', 'sin_premio', 0, '#9E9E9E', 4),
-                ('20% OFF', 'descuento_porcentaje', 20, '#E91E63', 1),
-                ('$1000 OFF', 'descuento_fijo', 1000, '#FF9800', 1),
+                ('10% descuento', 'descuento_porcentaje', 10, '#f4257e', 2),
+                ('20% descuento', 'descuento_porcentaje', 20, '#aa14f0', 1),
+                ('5% descuento', 'descuento_porcentaje', 5, '#15f919', 5),
+                ('10% descuento', 'descuento_porcentaje', 10, '#8b4513', 1),
+                ('20% descuento', 'descuento_porcentaje', 20, '#6bde54', 1),
+                ('5% descuento', 'descuento_porcentaje', 5, '#dcf524', 5),
+                ('5% descuento', 'descuento_porcentaje', 5, '#f59c5c', 5),
+                ('Sin premio', 'sin_premio', 0, '#e56dee', 10),
+                ('Sin premio', 'sin_premio', 0, '#3ddff5', 10),
+                ('Sin premio', 'sin_premio', 0, '#35e9bc', 10),
+                ('Sin premio', 'sin_premio', 0, '#9ef0ca', 10),
             ]
             for texto, tipo, valor, color, prob in segments:
-                seg = PrizeWheelSegment(
+                db.session.add(PrizeWheelSegment(
                     wheel_id=wheel.id, texto=texto, tipo=tipo,
-                    valor=Decimal(str(valor)), color=color, probabilidad=prob
-                )
-                db.session.add(seg)
+                    valor=Decimal(str(valor)), color=color, probabilidad=prob,
+                ))
             print('  🎡 Rueda de premios configurada')
 
         db.session.commit()
