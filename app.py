@@ -41,6 +41,30 @@ def create_app():
         images_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images')
         return send_from_directory(images_dir, filename)
 
+    @app.route('/manifest.json')
+    def manifest():
+        return {
+            "name": "Morena Sin Gluten",
+            "short_name": "Morena SG",
+            "description": "Sabores artesanales sin gluten",
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#ffffff",
+            "theme_color": "#f17528",
+            "icons": [
+                {
+                    "src": "/images/logo_frente.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                },
+                {
+                    "src": "/images/logo_frente.png",
+                    "sizes": "512x512",
+                    "type": "image/png"
+                }
+            ]
+        }
+
     @app.after_request
     def add_no_cache_headers(response):
         if request.endpoint == 'auth.login':
