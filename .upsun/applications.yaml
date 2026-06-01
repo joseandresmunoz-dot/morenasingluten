@@ -12,7 +12,7 @@ applications:
 
         web:
             commands:
-                start: "gunicorn -w 4 -b $SOCKET app:app"
+                start: "gunicorn -w 4 -b 0.0.0.0:$PORT app:app"
             locations:
                 "/":
                     passthru: true
