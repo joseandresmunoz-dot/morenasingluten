@@ -1,0 +1,16 @@
+# Nombre de tu aplicación Flask
+myapp:
+  type: python:3.11
+  
+  relationships:
+    database: "dbpostgres:postgresql"
+  
+  hooks:
+    build: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+
+  web:
+    commands:
+      # Usamos gunicorn para arrancar tu archivo principal de Flask (asumiendo que se llama app.py o main.py)
+      start: "gunicorn app:app"

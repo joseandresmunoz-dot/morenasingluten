@@ -37,6 +37,36 @@ def index():
     return render_template('shop/index.html', categories=categories, featured=featured, best_sellers=best_sellers)
 
 
+@shop_bp.route('/api/productos/buscar')
+def api_buscar_productos():
+    q = request.args.get('q', '').strip()
+    if not q or len(q) < 2:
+        return jsonify([])
+
+    products = Product.query.filter(
+        Product.activo == True,
+        Product.stock_disponible == True,
+        db.or_(
+            Product.nombre.ilike(f'%{q}%'),
+            Product.tags.any(Tag.nombre.ilike(f'%{q}%')),
+            Category.nombre.ilike(f'%{q}%')
+        )
+    ).outerjoin(Product.category).order_by(Product.nombre).limit(8).all()
+
+    results = []
+    for p in products:
+        tags = [{'nombre': t.nombre, 'color': t.color} for t in p.tags]
+        img = p.imagen_principal or ''
+        results.append({
+            'id': p.id,
+            'nombre': p.nombre,
+            'imagen': img,
+            'precio': float(p.precio) if p.precio else 0,
+            'tags': tags,
+        })
+    return jsonify(results)
+
+
 @shop_bp.route('/productos')
 def products():
     category_id = request.args.get('categoria', type=int)

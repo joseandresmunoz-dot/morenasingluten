@@ -1,6 +1,118 @@
 {% extends "base.html" %}
 {% block title %}Morena Sin Gluten - Tienda Sin Gluten{% endblock %}
 {% block extra_css %}
+<style>
+.hero-search-form {
+    max-width: 500px;
+    position: relative;
+}
+.hero-search-input {
+    border-radius: 25px 0 0 25px;
+    border: 2px solid var(--primary);
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+}
+.hero-search-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(241, 117, 40, 0.25);
+    border-color: var(--primary);
+}
+.hero-search-btn {
+    border-radius: 0 25px 25px 0;
+    padding: 0.6rem 1.2rem;
+}
+.search-results-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    display: none;
+    max-height: 400px;
+    overflow-y: auto;
+    text-align: left;
+}
+.search-results-dropdown.show {
+    display: block;
+}
+.search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.15s;
+}
+.search-result-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 12px 12px;
+}
+.search-result-item:hover {
+    background: var(--primary-soft);
+}
+.search-result-item img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.search-result-item .result-info {
+    flex: 1;
+    min-width: 0;
+}
+.search-result-item .result-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.search-result-item .result-price {
+    font-size: 0.8rem;
+    color: var(--primary);
+    font-weight: 500;
+}
+.search-result-item .result-tags {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    margin-top: 0.15rem;
+}
+.search-result-item .result-tags .badge {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.4rem;
+}
+.search-no-results {
+    padding: 1rem;
+    text-align: center;
+    color: #999;
+    font-size: 0.9rem;
+}
+.search-view-all {
+    display: block;
+    text-align: center;
+    padding: 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--primary);
+    border-top: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+    border-radius: 0 0 12px 12px;
+}
+.search-view-all:hover {
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+}
+</style>
 {% endblock %}
 {% block content %}
 <!-- Hero -->
@@ -9,6 +121,18 @@
         <img src="{{ url_for('brand_image', filename='logo_frente.png') }}" alt="Morena Sin Gluten" class="hero-logo mb-3">
         <h1 class="display-5 fw-semibold mb-3">Morena Sin Gluten</h1>
         <p class="lead hero-tagline mb-4">Sabores artesanales sin gluten, con una propuesta cuidada, simple y deliciosa para cada ocasión.</p>
+
+        <!-- Search bar -->
+        <div class="hero-search-form mx-auto mb-4" role="search">
+            <div class="input-group">
+                <input type="text" id="heroSearchInput" class="form-control hero-search-input" placeholder="Buscá por nombre, categoría o etiqueta..." aria-label="Buscar productos" autocomplete="off">
+                <button class="btn btn-morena hero-search-btn" type="button" id="heroSearchBtn">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            <div class="search-results-dropdown" id="searchResultsDropdown"></div>
+        </div>
+
         <a href="{{ url_for('shop.products') }}" class="btn btn-lg btn-morena">Ver Productos</a>
     </div>
 </section>
@@ -227,6 +351,103 @@
             const input = button.closest('form')?.querySelector('.home-quantity-input');
             if (input) changeQuantity(input, -1);
         });
+    });
+
+    /* Live search */
+    const searchInput = document.getElementById('heroSearchInput');
+    const searchBtn = document.getElementById('heroSearchBtn');
+    const dropdown = document.getElementById('searchResultsDropdown');
+
+    if (!searchInput) return;
+
+    let debounceTimer;
+
+    const doSearch = (q) => {
+        if (q.length < 2) {
+            dropdown.classList.remove('show');
+            dropdown.innerHTML = '';
+            return;
+        }
+
+        fetch('/api/productos/buscar?q=' + encodeURIComponent(q))
+            .then(r => r.json())
+            .then(data => {
+                dropdown.innerHTML = '';
+                if (data.length === 0) {
+                    dropdown.innerHTML = '<div class="search-no-results">Sin resultados</div>';
+                } else {
+                    data.forEach(p => {
+                        const div = document.createElement('div');
+                        div.className = 'search-result-item';
+                        div.dataset.url = '/producto/' + p.id;
+
+                        const tagsHtml = p.tags.map(t =>
+                            '<span class="badge" style="background-color:' + t.color + '">' +
+                            escHtml(t.nombre) + '</span>'
+                        ).join('');
+
+                        div.innerHTML =
+                            '<img src="' + escHtml(p.imagen || '/static/img/no-image.png') +
+                            '" alt="" loading="lazy">' +
+                            '<div class="result-info">' +
+                            '<div class="result-name">' + escHtml(p.nombre) + '</div>' +
+                            '<div class="result-tags">' + tagsHtml + '</div>' +
+                            '</div>' +
+                            '<div class="result-price">$' + p.precio.toFixed(2) + '</div>';
+
+                        div.addEventListener('click', () => {
+                            window.location.href = div.dataset.url;
+                        });
+
+                        dropdown.appendChild(div);
+                    });
+
+                    const viewAll = document.createElement('a');
+                    viewAll.className = 'search-view-all';
+                    viewAll.href = '/productos?buscar=' + encodeURIComponent(q);
+                    viewAll.textContent = 'Ver todos los resultados →';
+                    dropdown.appendChild(viewAll);
+                }
+                dropdown.classList.add('show');
+            })
+            .catch(() => {});
+    };
+
+    const escHtml = (s) => {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    };
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const q = searchInput.value.trim();
+        if (q.length < 2) {
+            dropdown.classList.remove('show');
+            dropdown.innerHTML = '';
+            return;
+        }
+        debounceTimer = setTimeout(() => doSearch(q), 250);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            dropdown.classList.remove('show');
+            searchInput.blur();
+        }
+    });
+
+    searchBtn.addEventListener('click', () => {
+        const q = searchInput.value.trim();
+        if (q.length >= 2) {
+            window.location.href = '/productos?buscar=' + encodeURIComponent(q);
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.hero-search-form')) {
+            dropdown.classList.remove('show');
+        }
     });
 })();
 </script>

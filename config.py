@@ -1,3 +1,5 @@
+import base64
+import json
 import os
 import smtplib
 from dotenv import load_dotenv
@@ -5,9 +7,25 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def _platform_db_url():
+    relationships = os.environ.get('PLATFORM_RELATIONSHIPS')
+    if not relationships:
+        return None
+    try:
+        data = json.loads(base64.b64decode(relationships).decode())
+    except Exception:
+        return None
+    pg = data.get('database', [{}])[0]
+    dbname = pg.get('path', 'main')
+    return (
+        f"postgresql://{pg['username']}:{pg['password']}"
+        f"@{pg['host']}:{pg['port']}/{dbname}"
+    )
+
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-cambiar-en-produccion')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'postgresql://usuario:password@localhost:5432/morena_sin_gluten')
+    SQLALCHEMY_DATABASE_URI = _platform_db_url() or os.environ.get('DATABASE_URL', 'postgresql://usuario:password@localhost:5432/morena_sin_gluten')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5MB max

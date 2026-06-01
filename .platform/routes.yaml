@@ -1,0 +1,10 @@
+# Platform.sh routes — Morena Sin Gluten
+# Docs: https://docs.platform.sh/configuration/routes.html
+
+"https://{default}/":
+    type: upstream
+    upstream: "morena:http"
+
+"https://www.{default}/":
+    type: redirect
+    to: "https://{default}/"

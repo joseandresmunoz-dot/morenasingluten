@@ -1,0 +1,6 @@
+version: "1"
+
+services:
+  dbpostgres:
+    type: postgresql:15
+    size: micro
