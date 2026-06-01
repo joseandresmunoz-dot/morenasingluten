@@ -1,0 +1,44 @@
+applications:
+    morena:
+        type: python:3.11
+
+        relationships:
+            database: "db:postgresql"
+
+        hooks:
+            build: |
+                pip install --upgrade pip
+                pip install -r requirements.txt
+
+        web:
+            commands:
+                start: "gunicorn -w 4 -b $SOCKET app:app"
+            locations:
+                "/":
+                    passthru: true
+                    allow: false
+                "/static":
+                    root: "static"
+                    allow: true
+                    expires: 30d
+                "/uploads":
+                    root: "uploads"
+                    allow: true
+                    expires: 7d
+                "/images":
+                    root: "images"
+                    allow: true
+                    expires: 30d
+
+        mounts:
+            "uploads":
+                source: local
+                source_path: uploads
+            "images":
+                source: local
+                source_path: images
+
+        variables:
+            env:
+                FLASK_ENV: production
+                SESSION_COOKIE_SECURE: "true"

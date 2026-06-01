@@ -1,0 +1,8 @@
+routes:
+    "https://{default}/":
+        type: upstream
+        upstream: "morena:http"
+
+    "https://www.{default}/":
+        type: redirect
+        to: "https://{default}/"
