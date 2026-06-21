@@ -182,6 +182,14 @@
                         <div class="product-img-wrapper">
                             <img src="{{ product.imagen_principal }}" class="img-cover" alt="{{ product.nombre }}">
                         </div>
+                        {% set all_imgs = product.todas_las_imagenes %}
+                        {% if all_imgs|length > 1 %}
+                        <div class="product-thumbs">
+                            {% for img in all_imgs %}
+                            <img src="{{ img.url }}" class="product-thumb{% if loop.first %} active{% endif %}" data-img="{{ img.url }}" alt="">
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                         {% else %}
                         <div style="height: 200px;" class="bg-rosa-light d-flex align-items-center justify-content-center">
                             <i class="bi bi-cake2 text-rosa" style="font-size: 3rem;"></i>
@@ -250,6 +258,14 @@
                         <div class="product-img-wrapper">
                             <img src="{{ product.imagen_principal }}" class="img-cover" alt="{{ product.nombre }}">
                         </div>
+                        {% set all_imgs = product.todas_las_imagenes %}
+                        {% if all_imgs|length > 1 %}
+                        <div class="product-thumbs">
+                            {% for img in all_imgs %}
+                            <img src="{{ img.url }}" class="product-thumb{% if loop.first %} active{% endif %}" data-img="{{ img.url }}" alt="">
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                         {% else %}
                         <div style="height: 200px;" class="bg-rosa-light d-flex align-items-center justify-content-center">
                             <i class="bi bi-cake2 text-rosa" style="font-size: 3rem;"></i>

@@ -89,6 +89,9 @@ def create_app():
         if 'email_verificado' not in user_columns:
             db.session.execute(text("ALTER TABLE users ADD COLUMN email_verificado BOOLEAN DEFAULT FALSE"))
             db.session.commit()
+        if 'notas' not in user_columns:
+            db.session.execute(text("ALTER TABLE users ADD COLUMN notas TEXT"))
+            db.session.commit()
         product_columns = [c['name'] for c in inspector.get_columns('products')]
         if 'destacado' not in product_columns:
             db.session.execute(text("ALTER TABLE products ADD COLUMN destacado BOOLEAN DEFAULT FALSE"))

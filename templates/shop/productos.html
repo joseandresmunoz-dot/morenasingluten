@@ -54,22 +54,30 @@
                 {% for product in products %}
                 <div class="col-6 col-lg-4">
                     <div class="card card-morena h-100 product-card">
-                        <a href="{{ url_for('shop.product_detail', product_id=product.id) }}" class="d-block">
-                            {% if product.imagen_principal %}
-                            <div class="product-img-wrapper">
-                                <img src="{{ product.imagen_principal }}" class="img-cover" alt="{{ product.nombre }}">
-                            </div>
-                            {% else %}
-                            <div style="height: 200px;" class="bg-rosa-light d-flex align-items-center justify-content-center">
-                                <i class="bi bi-cake2 text-rosa" style="font-size: 3rem;"></i>
-                            </div>
-                            {% endif %}
-                        </a>
-                        <div class="card-body d-flex flex-column">
-                            <h6 class="card-title">{{ product.nombre }}</h6>
-                            {% if product.category %}
-                            <small class="text-muted">{{ product.category.nombre }}</small>
-                            {% endif %}
+                    <a href="{{ url_for('shop.product_detail', product_id=product.id) }}" class="d-block">
+                        {% if product.imagen_principal %}
+                        <div class="product-img-wrapper">
+                            <img src="{{ product.imagen_principal }}" class="img-cover" alt="{{ product.nombre }}">
+                        </div>
+                        {% set all_imgs = product.todas_las_imagenes %}
+                        {% if all_imgs|length > 1 %}
+                        <div class="product-thumbs">
+                            {% for img in all_imgs %}
+                            <img src="{{ img.url }}" class="product-thumb{% if loop.first %} active{% endif %}" data-img="{{ img.url }}" alt="">
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div style="height: 200px;" class="bg-rosa-light d-flex align-items-center justify-content-center">
+                            <i class="bi bi-cake2 text-rosa" style="font-size: 3rem;"></i>
+                        </div>
+                        {% endif %}
+                    </a>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ product.nombre }}</h6>
+                        {% if product.category %}
+                        <small class="text-muted">{{ product.category.nombre }}</small>
+                        {% endif %}
                             <div class="mt-2">
                                 {% for tag in product.tags %}
                                 <span class="badge" style="background-color: {{ tag.color }}; font-size: 0.7rem;">{{ tag.nombre }}</span>

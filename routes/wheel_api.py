@@ -1,7 +1,7 @@
 import math
 import secrets
 from datetime import datetime, timedelta
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, session, current_app
 from flask_login import login_required, current_user
 from sqlalchemy import func
 
@@ -34,6 +34,17 @@ def get_or_create_wheel():
     return wheel
 
 
+def _total_con_pendiente():
+    """Retorna total_gastado incluyendo el pedido pendiente en sesión."""
+    total = float(current_user.total_spent or 0)
+    order_id = session.get('wheel_order_id')
+    if order_id:
+        order = db.session.get(Order, order_id)
+        if order and order.user_id == current_user.id:
+            total += float(order.total)
+    return total
+
+
 @wheel_api_bp.route('/status', methods=['GET'])
 @login_required
 def get_wheel_status():
@@ -41,7 +52,7 @@ def get_wheel_status():
     if not wheel:
         return jsonify({'disponible': False, 'mensaje': 'Rueda inactiva'})
 
-    total_spent = float(current_user.total_spent or 0)
+    total_spent = _total_con_pendiente()
     min_amount = float(wheel.monto_minimo_activacion)
 
     expected_spins = int(total_spent / min_amount) if min_amount > 0 else 0
@@ -85,7 +96,7 @@ def generate_spin_token():
     if not wheel:
         return jsonify({'error': 'Rueda inactiva'}), 400
 
-    total_spent = float(current_user.total_spent or 0)
+    total_spent = _total_con_pendiente()
     min_amount = float(wheel.monto_minimo_activacion)
 
     expected_spins = int(total_spent / min_amount) if min_amount > 0 else 0
@@ -159,7 +170,7 @@ def spin_wheel():
     if not wheel or not wheel.activa:
         return jsonify({'error': 'Rueda inactiva'}), 400
 
-    total_spent = float(current_user.total_spent or 0)
+    total_spent = _total_con_pendiente()
     min_amount = float(wheel.monto_minimo_activacion)
 
     expected_spins = int(total_spent / min_amount) if min_amount > 0 else 0

@@ -162,7 +162,49 @@ def update_shipping_config():
 @admin_required
 def products():
     products = Product.query.order_by(Product.nombre).all()
-    return render_template('admin/productos.html', products=products)
+    categories = Category.query.order_by(Category.nombre).all()
+    return render_template('admin/productos.html', products=products, categories=categories)
+
+
+@admin_bp.route('/productos/actualizar-precios', methods=['POST'])
+@admin_required
+def bulk_price_update():
+    categoria_id = request.form.get('categoria_id', 0, type=int)
+    tipo = request.form.get('tipo', 'porcentaje')
+    valor = request.form.get('valor', 0, type=float)
+    redondear = 'redondear' in request.form
+
+    if valor <= 0:
+        flash('El valor debe ser mayor a 0.', 'danger')
+        return redirect(url_for('admin.products'))
+
+    query = Product.query
+    if categoria_id > 0:
+        query = query.filter_by(category_id=categoria_id)
+
+    products = query.all()
+    if not products:
+        flash('No hay productos en los filtros seleccionados.', 'warning')
+        return redirect(url_for('admin.products'))
+
+    actualizados = 0
+    for p in products:
+        if tipo == 'porcentaje':
+            nuevo = float(p.precio) * (1 + valor / 100)
+        else:
+            nuevo = float(p.precio) + valor
+
+        if redondear:
+            nuevo = round(nuevo / 100) * 100
+
+        p.precio = Decimal(str(round(nuevo, 2)))
+        actualizados += 1
+
+    db.session.commit()
+
+    tipo_label = '%' if tipo == 'porcentaje' else '$'
+    flash(f'{actualizados} producto(s) actualizado(s) con {tipo_label}{"%.2f" % valor}.', 'success')
+    return redirect(url_for('admin.products'))
 
 
 @admin_bp.route('/productos/nuevo', methods=['GET', 'POST'])
@@ -1061,3 +1103,71 @@ def calendar_event_delete(event_id):
 def clients():
     users = User.query.filter_by(is_admin=False).order_by(User.created_at.desc()).all()
     return render_template('admin/clientes.html', users=users)
+
+
+@admin_bp.route('/clientes/nuevo', methods=['POST'])
+@admin_required
+@csrf.exempt
+def client_new():
+    nombre = request.form.get('nombre', '').strip()
+    email = request.form.get('email', '').strip().lower()
+    whatsapp = request.form.get('whatsapp', '').strip()
+    direccion = request.form.get('direccion', '').strip()
+    password = request.form.get('password', '').strip()
+
+    if not nombre or not email:
+        flash('Nombre y email son obligatorios.', 'danger')
+        return redirect(url_for('admin.clients'))
+
+    if User.query.filter_by(email=email).first():
+        flash(f'Ya existe un usuario con el email "{email}".', 'danger')
+        return redirect(url_for('admin.clients'))
+
+    username = email.split('@')[0]
+    base_username = username
+    suffix = 1
+    while User.query.filter_by(username=username).first():
+        username = f'{base_username}{suffix}'
+        suffix += 1
+
+    user = User(
+        email=email,
+        username=username,
+        nombre=nombre,
+        whatsapp=whatsapp or None,
+        direccion=direccion or None,
+        email_verificado=True
+    )
+    if password:
+        user.set_password(password)
+
+    db.session.add(user)
+    db.session.commit()
+    flash(f'Cliente "{nombre}" creado.', 'success')
+    return redirect(url_for('admin.clients'))
+
+
+@admin_bp.route('/clientes/<int:user_id>/editar', methods=['POST'])
+@admin_required
+@csrf.exempt
+def client_edit(user_id):
+    user = User.query.get_or_404(user_id)
+    user.nombre = request.form.get('nombre', '').strip()
+    user.whatsapp = request.form.get('whatsapp', '').strip() or None
+    user.direccion = request.form.get('direccion', '').strip() or None
+    user.notas = request.form.get('notas', '').strip() or None
+
+    email = request.form.get('email', '').strip().lower()
+    if email and email != user.email:
+        if User.query.filter_by(email=email).first():
+            flash(f'Ya existe otro usuario con el email "{email}".', 'danger')
+            return redirect(url_for('admin.clients'))
+        user.email = email
+
+    password = request.form.get('password', '').strip()
+    if password:
+        user.set_password(password)
+
+    db.session.commit()
+    flash(f'Cliente "{user.nombre}" actualizado.', 'success')
+    return redirect(url_for('admin.clients'))

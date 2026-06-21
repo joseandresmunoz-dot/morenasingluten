@@ -1,9 +1,14 @@
 {% extends "admin/base_admin.html" %}
 {% block title %}Productos - Admin{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3>Productos</h3>
-    <a href="{{ url_for('admin.product_new') }}" class="btn btn-morena"><i class="bi bi-plus-lg"></i> Nuevo Producto</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <h3 class="mb-0">Productos</h3>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#bulkPriceModal">
+            <i class="bi bi-currency-dollar"></i> Actualizar Precios
+        </button>
+        <a href="{{ url_for('admin.product_new') }}" class="btn btn-morena"><i class="bi bi-plus-lg"></i> Nuevo Producto</a>
+    </div>
 </div>
 
 <div class="card">
@@ -25,23 +30,23 @@
                 <tbody>
                     {% for product in products %}
                     <tr class="{{ 'table-secondary' if not product.activo }}">
-                        <td>
+                        <td data-label="Foto">
                             {% if product.imagen_principal %}
                             <img src="{{ product.imagen_principal }}" class="rounded img-cover img-square-40">
                             {% else %}
                             <div class="bg-rosa-light rounded d-flex align-items-center justify-content-center" style="width:40px; height:40px;"><i class="bi bi-cake2 text-rosa"></i></div>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="Nombre">
                             {{ product.nombre }}
                             <br>
                             {% for tag in product.tags %}
                             <span class="badge" style="background-color: {{ tag.color }}; font-size: 0.6rem;">{{ tag.nombre }}</span>
                             {% endfor %}
                         </td>
-                        <td>{{ product.category.nombre if product.category else '-' }}</td>
-                        <td>${{ "%.2f"|format(product.precio) }}</td>
-                        <td>
+                        <td data-label="Categoría">{{ product.category.nombre if product.category else '-' }}</td>
+                        <td data-label="Precio">${{ "%.2f"|format(product.precio) }}</td>
+                        <td data-label="Personalizable">
                             {% if product.es_personalizable %}
                             <span class="badge bg-info">Sí</span>
                             <a href="{{ url_for('admin.product_customizations', product_id=product.id) }}" class="btn btn-sm btn-outline-info ms-1"><i class="bi bi-sliders"></i></a>
@@ -49,21 +54,21 @@
                             <span class="text-muted">No</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="Destacado">
                             {% if product.destacado %}
                             <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Sí</span>
                             {% else %}
                             <span class="text-muted">No</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="Estado">
                             {% if product.activo %}
                             <span class="badge bg-success">Activo</span>
                             {% else %}
                             <span class="badge bg-danger">Inactivo</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="Acciones">
                             <a href="{{ url_for('admin.product_edit', product_id=product.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
                             <form method="POST" action="{{ url_for('admin.product_delete', product_id=product.id) }}" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -77,4 +82,64 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Actualizar Precios -->
+<div class="modal fade" id="bulkPriceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin.bulk_price_update') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-currency-dollar"></i> Actualizar Precios</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Aplicar a</label>
+                        <select name="categoria_id" class="form-select">
+                            <option value="0">Todas las categorías</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de ajuste</label>
+                        <select name="tipo" class="form-select" id="bulkTipo">
+                            <option value="porcentaje">Porcentaje (%)</option>
+                            <option value="monto_fijo">Monto fijo ($)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Valor</label>
+                        <div class="input-group">
+                            <span class="input-group-text" id="bulkSimbolo">%</span>
+                            <input type="number" name="valor" class="form-control" step="0.01" min="0.01"
+                                   placeholder="Ej: 10" required>
+                        </div>
+                        <div class="form-text">El precio se <strong>incrementará</strong>. Usá valores negativos para reducir (ej: -10).</div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="redondear" id="bulkRedondear">
+                        <label class="form-check-label" for="bulkRedondear">
+                            Redondear a centenas (ej: $1.530 → $1.600)
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-morena">
+                        <i class="bi bi-check-lg"></i> Actualizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('bulkTipo')?.addEventListener('change', function() {
+    document.getElementById('bulkSimbolo').textContent = this.value === 'porcentaje' ? '%' : '$';
+});
+</script>
 {% endblock %}

@@ -1,7 +1,52 @@
 {% extends "admin/base_admin.html" %}
 {% block title %}Clientes - Admin{% endblock %}
 {% block content %}
-<h3 class="mb-4">Clientes</h3>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Clientes</h3>
+    <button type="button" class="btn btn-morena btn-sm" data-bs-toggle="modal" data-bs-target="#nuevoClienteModal">
+        <i class="bi bi-person-plus"></i> Nuevo Cliente
+    </button>
+</div>
+
+<!-- Modal Nuevo Cliente -->
+<div class="modal fade" id="nuevoClienteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin.client_new') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nuevo Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" name="nombre" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">WhatsApp</label>
+                        <input type="text" name="whatsapp" class="form-control" placeholder="+54 11 1234 5678">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Dirección</label>
+                        <input type="text" name="direccion" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contraseña</label>
+                        <input type="text" name="password" class="form-control" placeholder="Dejar vacío para sin contraseña">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-morena">Guardar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <div class="card">
     <div class="card-body p-0">
@@ -13,24 +58,26 @@
                         <th>Nombre</th>
                         <th>Email</th>
                         <th>WhatsApp</th>
+                        <th>Dirección</th>
                         <th>Pedidos</th>
                         <th>Total Gastado</th>
                         <th>Registro</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user in users %}
                     <tr>
-                        <td>
+                        <td data-label="Avatar">
                             {% if user.avatar_url %}
                             <img src="{{ user.avatar_url }}" width="30" height="30" class="rounded-circle" referrerpolicy="no-referrer">
                             {% else %}
                             <i class="bi bi-person-circle text-muted"></i>
                             {% endif %}
                         </td>
-                        <td>{{ user.nombre }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>
+                        <td data-label="Nombre">{{ user.nombre }}</td>
+                        <td data-label="Email">{{ user.email }}</td>
+                        <td data-label="WhatsApp">
                             {% if user.whatsapp %}
                             <a href="https://wa.me/{{ user.whatsapp|replace('+','')|replace(' ','') }}" target="_blank" class="text-success">
                                 <i class="bi bi-whatsapp"></i> {{ user.whatsapp }}
@@ -39,13 +86,71 @@
                             <span class="text-muted">-</span>
                             {% endif %}
                         </td>
-                        <td>{{ user.orders.count() }}</td>
-                        <td>${{ "%.2f"|format(user.total_spent) }}</td>
-                        <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td data-label="Dirección">
+                            {% if user.direccion %}
+                            <small>{{ user.direccion }}</small>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Pedidos">{{ user.orders.count() }}</td>
+                        <td data-label="Total Gastado">${{ "%.2f"|format(user.total_spent) }}</td>
+                        <td data-label="Registro">{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td data-label="Acciones">
+                            <button type="button" class="btn btn-sm btn-outline-morena" data-bs-toggle="modal" data-bs-target="#editarClienteModal{{ user.id }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            <!-- Modals Editar Cliente -->
+            {% for user in users %}
+            <div class="modal fade" id="editarClienteModal{{ user.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="POST" action="{{ url_for('admin.client_edit', user_id=user.id) }}">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Editar Cliente</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre</label>
+                                    <input type="text" name="nombre" class="form-control" value="{{ user.nombre }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">WhatsApp</label>
+                                    <input type="text" name="whatsapp" class="form-control" value="{{ user.whatsapp or '' }}" placeholder="+54 11 1234 5678">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Dirección</label>
+                                    <input type="text" name="direccion" class="form-control" value="{{ user.direccion or '' }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Nueva Contraseña</label>
+                                    <input type="text" name="password" class="form-control" placeholder="Dejar vacío para mantener actual">
+                                </div>
+                                <hr>
+                                <div class="mb-3">
+                                    <label class="form-label">Notas (solo visible para admin)</label>
+                                    <textarea name="notas" class="form-control" rows="3">{{ user.notas or '' }}</textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-morena">Guardar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>

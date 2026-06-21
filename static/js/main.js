@@ -85,6 +85,29 @@ function initAjaxCartForms() {
     });
 }
 
+// Product card thumbnail click swap (no navega al producto)
+document.addEventListener('click', function(e) {
+    const thumb = e.target.closest('.product-thumb');
+    if (!thumb) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const card = thumb.closest('.product-card');
+    if (!card) return;
+
+    const wrapper = card.querySelector('.product-img-wrapper');
+    const mainImg = wrapper?.querySelector('img');
+    if (!mainImg) return;
+
+    const newSrc = thumb.dataset.img;
+    if (!newSrc || mainImg.src === newSrc) return;
+
+    mainImg.src = newSrc;
+    card.querySelectorAll('.product-thumb').forEach(t => t.classList.remove('active'));
+    thumb.classList.add('active');
+});
+
 // Auto-dismiss alerts after 5 seconds
 document.addEventListener('DOMContentLoaded', function() {
     const alerts = document.querySelectorAll('.alert:not(.alert-info):not(.alert-warning)');

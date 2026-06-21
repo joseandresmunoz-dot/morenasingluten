@@ -123,10 +123,10 @@
                         <tbody>
                             {% for order in pedidos_recientes %}
                             <tr>
-                                <td><a href="{{ url_for('admin.order_detail', order_id=order.id) }}">{{ order.codigo }}</a></td>
-                                <td>{{ order.user.nombre }}</td>
-                                <td>${{ "%.2f"|format(order.total) }}</td>
-                                <td>
+                                <td data-label="Código"><a href="{{ url_for('admin.order_detail', order_id=order.id) }}">{{ order.codigo }}</a></td>
+                                <td data-label="Cliente">{{ order.user.nombre }}</td>
+                                <td data-label="Total">${{ "%.2f"|format(order.total) }}</td>
+                                <td data-label="Estado">
                                     <select class="form-select form-select-sm status-select" data-order-id="{{ order.id }}" style="width: auto; min-width: 140px;">
                                         <option value="pendiente" {{ 'selected' if order.status == 'pendiente' else '' }}>Pendiente</option>
                                         <option value="senia_pagada" {{ 'selected' if order.status == 'senia_pagada' else '' }}>Seña Pagada</option>
@@ -137,7 +137,7 @@
                                         <option value="cancelado" {{ 'selected' if order.status == 'cancelado' else '' }}>Cancelado</option>
                                     </select>
                                 </td>
-                                <td>{{ order.created_at.strftime('%d/%m %H:%M') }}</td>
+                                <td data-label="Fecha">{{ order.created_at.strftime('%d/%m %H:%M') }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

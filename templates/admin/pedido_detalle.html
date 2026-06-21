@@ -12,6 +12,7 @@
         <div class="card mb-3">
             <div class="card-header"><h6 class="mb-0">Productos</h6></div>
             <div class="card-body p-0">
+                <div class="table-responsive">
                 <table class="table mb-0">
                     <thead>
                         <tr>
@@ -24,7 +25,7 @@
                     <tbody>
                         {% for item in order.items %}
                         <tr>
-                            <td>
+                            <td data-label="Producto">
                                 {{ item.product.nombre }}
                                 {% if item.personalizacion %}
                                 <br><small class="text-muted">
@@ -34,13 +35,14 @@
                                 </small>
                                 {% endif %}
                             </td>
-                            <td class="text-center">{{ item.cantidad }}</td>
-                            <td class="text-end">${{ "%.2f"|format(item.precio_unitario) }}</td>
-                            <td class="text-end">${{ "%.2f"|format(item.subtotal) }}</td>
+                            <td data-label="Cantidad" class="text-center">{{ item.cantidad }}</td>
+                            <td data-label="P. Unit." class="text-end">${{ "%.2f"|format(item.precio_unitario) }}</td>
+                            <td data-label="Subtotal" class="text-end">${{ "%.2f"|format(item.subtotal) }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
 

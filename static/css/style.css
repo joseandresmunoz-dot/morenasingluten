@@ -216,6 +216,49 @@ h1, h2, h3, h4, h5, h6 {
     height: 100%;
 }
 
+/* Product card multiple image thumbs */
+.product-thumbs {
+    display: flex;
+    gap: 4px;
+    padding: 6px 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--card-border);
+}
+
+.product-thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid transparent;
+    opacity: 0.6;
+    transition: opacity 0.2s, border-color 0.2s;
+}
+
+.product-thumb:hover,
+.product-thumb.active {
+    opacity: 1;
+    border-color: var(--primary);
+}
+
+.product-thumb:hover {
+    opacity: 0.85;
+}
+
+@media (max-width: 500px) {
+    .product-thumbs {
+        gap: 3px;
+        padding: 4px 6px;
+    }
+    .product-thumb {
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+    }
+}
+
 .img-square-40 {
     width: 40px !important;
     height: 40px !important;

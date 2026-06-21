@@ -156,6 +156,19 @@ body {
     color: #888;
 }
 
+/* Sidebar overlay on mobile */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 99;
+}
+
+.sidebar-overlay.show {
+    display: block;
+}
+
 /* Responsive */
 @media (max-width: 991px) {
     .admin-sidebar {
@@ -169,5 +182,105 @@ body {
 
     .admin-content {
         margin-left: 0;
+    }
+}
+
+@media (max-width: 767px) {
+    .admin-content {
+        padding: 1rem;
+    }
+
+    .admin-topbar {
+        padding-bottom: 0.75rem;
+    }
+
+    /* Convert admin listing tables to cards on mobile */
+    .card .table-responsive:not(.table-bordered) thead {
+        display: none;
+    }
+
+    .card .table-responsive:not(.table-bordered) tbody tr {
+        display: block;
+        border: 1px solid #eee;
+        border-radius: 10px;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        background: #fff;
+    }
+
+    .card .table-responsive:not(.table-bordered) tbody tr td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 0.35rem 0;
+        border: none;
+        font-size: 0.85rem;
+    }
+
+    .card .table-responsive:not(.table-bordered) tbody tr td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #888;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .card .table-responsive:not(.table-bordered) tbody tr td:first-child {
+        padding-top: 0;
+    }
+
+    .card .table-responsive:not(.table-bordered) tbody tr td:last-child {
+        padding-bottom: 0;
+    }
+
+    /* Inline forms inside table cells on mobile */
+    .card .table-responsive:not(.table-bordered) tbody tr td form.d-inline {
+        display: inline-flex !important;
+    }
+
+    /* Filter buttons scrollable */
+    .admin-filter-bar {
+        overflow-x: auto;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch;
+        gap: 0.35rem !important;
+        padding-bottom: 0.5rem;
+    }
+
+    .admin-filter-bar .btn {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Stat cards mobile */
+    .stat-card .card-body h3 {
+        font-size: 1.25rem;
+    }
+
+    .stat-card .card-body h6 {
+        font-size: 0.75rem;
+    }
+
+    /* Dashboard layout */
+    .row.g-3.mb-4 .col-md-3 {
+        margin-bottom: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-content {
+        padding: 0.75rem;
+    }
+
+    .table-responsive tbody tr {
+        padding: 0.6rem;
+    }
+
+    .table-responsive tbody tr td {
+        font-size: 0.8rem;
+        padding: 0.3rem 0;
     }
 }

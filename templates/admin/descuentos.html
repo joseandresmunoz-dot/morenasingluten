@@ -23,18 +23,18 @@
                 <tbody>
                     {% for rule in rules %}
                     <tr>
-                        <td>{{ rule.nombre }}</td>
-                        <td><span class="badge bg-info">{{ rule.tipo|replace('_',' ')|title }}</span></td>
-                        <td><small>{{ rule.condicion }}</small></td>
-                        <td>
+                        <td data-label="Nombre">{{ rule.nombre }}</td>
+                        <td data-label="Tipo"><span class="badge bg-info">{{ rule.tipo|replace('_',' ')|title }}</span></td>
+                        <td data-label="Condición"><small>{{ rule.condicion }}</small></td>
+                        <td data-label="Descuento">
                             {% if rule.descuento_tipo == 'porcentaje' %}
                             {{ rule.descuento_valor }}%
                             {% else %}
                             ${{ "%.2f"|format(rule.descuento_valor) }}
                             {% endif %}
                         </td>
-                        <td><span class="badge bg-{{ 'success' if rule.activo else 'danger' }}">{{ 'Activa' if rule.activo else 'Inactiva' }}</span></td>
-                        <td>
+                        <td data-label="Estado"><span class="badge bg-{{ 'success' if rule.activo else 'danger' }}">{{ 'Activa' if rule.activo else 'Inactiva' }}</span></td>
+                        <td data-label="Acciones">
                             <form method="POST" action="{{ url_for('admin.discount_rule_toggle', rule_id=rule.id) }}" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-outline-{{ 'danger' if rule.activo else 'success' }}">
