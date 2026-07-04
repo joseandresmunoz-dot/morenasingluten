@@ -2,6 +2,7 @@ import os
 from flask import Flask, send_from_directory, redirect, url_for, flash, request
 from flask_wtf.csrf import CSRFError
 from sqlalchemy import text
+from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
 from extensions import db, login_manager, migrate, csrf
 
@@ -9,6 +10,8 @@ from extensions import db, login_manager, migrate, csrf
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
     # Inicializar extensiones
     db.init_app(app)
