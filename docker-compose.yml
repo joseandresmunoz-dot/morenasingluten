@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: morena_sin_gluten
+      POSTGRES_USER: morena
+      POSTGRES_PASSWORD: morena_pass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U morena -d morena_sin_gluten"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://morena:morena_pass@db:5432/morena_sin_gluten
+      SECRET_KEY: ${SECRET_KEY:-cambiar-en-produccion}
+      WHATSAPP_NUMBER: ${WHATSAPP_NUMBER:-5492966355530}
+      MERCADOPAGO_ALIAS: ${MERCADOPAGO_ALIAS:-lacocinaceliaco}
+      MERCADOPAGO_TITULAR: ${MERCADOPAGO_TITULAR:-Ana Carolina Iannovelli}
+      SESSION_COOKIE_SECURE: "true"
+      SESSION_COOKIE_SAMESITE: Lax
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "5000:5000"
+
+volumes:
+  pgdata:
+  uploads:
