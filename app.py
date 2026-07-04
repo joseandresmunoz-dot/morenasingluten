@@ -83,7 +83,10 @@ def create_app():
     # Crear tablas si no existen
     with app.app_context():
         import models  # noqa: F401
-        db.create_all()
+        try:
+            db.create_all()
+        except Exception:
+            pass
         inspector = db.inspect(db.engine)
         user_columns = [c['name'] for c in inspector.get_columns('users')]
         if 'email_verificado' not in user_columns:
