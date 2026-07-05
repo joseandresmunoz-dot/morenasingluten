@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css', v='20260621-1') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css', v='20260705-2') }}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -80,6 +80,11 @@
                     </a>
                 </li>
                 <li class="nav-item mt-3">
+                    <a class="nav-link" href="#" id="darkModeToggle">
+                        <i class="bi bi-moon-stars"></i> <span id="darkModeLabel">Modo Oscuro</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('shop.index') }}">
                         <i class="bi bi-arrow-left"></i> Ir a la Tienda
                     </a>
@@ -129,6 +134,29 @@
 
         toggle?.addEventListener('click', toggleSidebar);
         overlay?.addEventListener('click', toggleSidebar);
+
+        // Dark Mode
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeLabel = document.getElementById('darkModeLabel');
+        const darkModeIcon = darkModeToggle?.querySelector('i');
+
+        function setDarkMode(enabled) {
+            document.body.classList.toggle('dark-mode', enabled);
+            localStorage.setItem('admin-dark-mode', enabled ? '1' : '');
+            if (darkModeLabel) darkModeLabel.textContent = enabled ? 'Modo Claro' : 'Modo Oscuro';
+            if (darkModeIcon) {
+                darkModeIcon.className = enabled ? 'bi bi-sun' : 'bi bi-moon-stars';
+            }
+        }
+
+        if (localStorage.getItem('admin-dark-mode') === '1') {
+            setDarkMode(true);
+        }
+
+        darkModeToggle?.addEventListener('click', function(e) {
+            e.preventDefault();
+            setDarkMode(!document.body.classList.contains('dark-mode'));
+        });
     </script>
 </body>
 </html>
