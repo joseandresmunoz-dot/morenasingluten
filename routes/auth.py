@@ -3,9 +3,9 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
 from authlib.integrations.flask_client import OAuth
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-from config import Config
 from extensions import db
 from models import User, AdminEmail
+from config import Config as AppConfig
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -88,11 +88,16 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        try:
-            _send_verify_email(user)
-            flash('Cuenta creada. Te enviamos un link para verificar tu email.', 'success')
-        except Exception:
-            flash('Cuenta creada. No se pudo enviar el email de verificación, podés reenviarlo desde tu perfil.', 'warning')
+        if AppConfig.has_mail_config():
+            try:
+                _send_verify_email(user)
+                flash('Cuenta creada. Te enviamos un link para verificar tu email.', 'success')
+            except Exception:
+                flash('Cuenta creada. No se pudo enviar el email de verificación, podés reenviarlo desde tu perfil.', 'warning')
+        else:
+            user.email_verificado = True
+            db.session.commit()
+            flash('Cuenta creada correctamente.', 'success')
 
         login_user(user, remember=True)
         return redirect(url_for('shop.index'))
