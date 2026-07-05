@@ -61,13 +61,14 @@
                         <th>Dirección</th>
                         <th>Pedidos</th>
                         <th>Total Gastado</th>
+                        <th>Estado</th>
                         <th>Registro</th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user in users %}
-                    <tr>
+                    <tr class="{{ 'text-muted opacity-75' if not user.is_active_user }}">
                         <td data-label="Avatar">
                             {% if user.avatar_url %}
                             <img src="{{ user.avatar_url }}" width="30" height="30" class="rounded-circle" referrerpolicy="no-referrer">
@@ -95,11 +96,28 @@
                         </td>
                         <td data-label="Pedidos">{{ user.orders.count() }}</td>
                         <td data-label="Total Gastado">${{ "%.2f"|format(user.total_spent) }}</td>
+                        <td data-label="Estado">
+                            {% if user.is_active_user %}
+                            <span class="badge bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge bg-danger">Bloqueado</span>
+                            {% endif %}
+                        </td>
                         <td data-label="Registro">{{ user.created_at.strftime('%d/%m/%Y') }}</td>
-                        <td data-label="Acciones">
+                        <td data-label="Acciones" class="text-nowrap">
                             <button type="button" class="btn btn-sm btn-outline-morena" data-bs-toggle="modal" data-bs-target="#editarClienteModal{{ user.id }}">
                                 <i class="bi bi-pencil"></i>
                             </button>
+                            <form method="POST" action="{{ url_for('admin.client_toggle_block', user_id=user.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm {{ 'btn-outline-success' if not user.is_active_user else 'btn-outline-warning' }}" title="{{ 'Activar' if not user.is_active_user else 'Bloquear' }}">
+                                    <i class="bi {{ 'bi-unlock' if not user.is_active_user else 'bi-lock' }}"></i>
+                                </button>
+                            </form>
+                            {% if user.orders.count() == 0 %}
+                            <form method="POST" action="{{ url_for('admin.client_delete', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar permanentemente a {{ user.nombre }}?')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

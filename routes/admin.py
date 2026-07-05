@@ -1173,6 +1173,41 @@ def client_edit(user_id):
     return redirect(url_for('admin.clients'))
 
 
+@admin_bp.route('/clientes/<int:user_id>/toggle-bloqueo', methods=['POST'])
+@admin_required
+@csrf.exempt
+def client_toggle_block(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.is_admin:
+        flash('No podés bloquear a otro administrador.', 'danger')
+        return redirect(url_for('admin.clients'))
+
+    user.is_active_user = not user.is_active_user
+    db.session.commit()
+    estado = 'bloqueado' if not user.is_active_user else 'activado'
+    flash(f'Cliente "{user.nombre}" {estado}.', 'info')
+    return redirect(url_for('admin.clients'))
+
+
+@admin_bp.route('/clientes/<int:user_id>/eliminar', methods=['POST'])
+@admin_required
+@csrf.exempt
+def client_delete(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.is_admin:
+        flash('No podés eliminar a otro administrador.', 'danger')
+        return redirect(url_for('admin.clients'))
+
+    if user.orders.count() > 0:
+        flash(f'No se puede eliminar "{user.nombre}" porque tiene pedidos asociados. Bloquealo en su lugar.', 'danger')
+        return redirect(url_for('admin.clients'))
+
+    db.session.delete(user)
+    db.session.commit()
+    flash(f'Cliente "{user.nombre}" eliminado.', 'success')
+    return redirect(url_for('admin.clients'))
+
+
 # --- PERFIL ADMIN ---
 
 @admin_bp.route('/perfil', methods=['GET', 'POST'])
