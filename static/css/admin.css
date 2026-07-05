@@ -315,6 +315,11 @@ body.dark-mode .card-header {
 
 body.dark-mode .table {
     color: #e0e0e0;
+    background-color: transparent;
+}
+
+body.dark-mode .table-responsive {
+    background-color: transparent;
 }
 
 body.dark-mode .table th {
