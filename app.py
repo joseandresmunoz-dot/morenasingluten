@@ -151,6 +151,18 @@ def create_app():
             db.session.execute(text("ALTER TABLE prize_spins ADD COLUMN token_id INTEGER REFERENCES prize_wheel_tokens(id)"))
             db.session.commit()
 
+        # Admin emails table
+        admin_email_columns = [c['name'] for c in inspector.get_columns('admin_emails')] if inspector.has_table('admin_emails') else []
+        if 'id' not in admin_email_columns:
+            db.session.execute(text("""
+                CREATE TABLE IF NOT EXISTS admin_emails (
+                    id SERIAL PRIMARY KEY,
+                    email VARCHAR(150) UNIQUE NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            db.session.commit()
+
     # Context processor para templates
     @app.context_processor
     def inject_cart_count():

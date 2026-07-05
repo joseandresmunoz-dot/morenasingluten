@@ -395,6 +395,15 @@ class PrizeSpin(db.Model):
 
 # --- CALENDARIO ---
 
+class AdminEmail(db.Model):
+    """Emails autorizados como admin via Google OAuth"""
+    __tablename__ = 'admin_emails'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class CalendarEvent(db.Model):
     """Eventos del calendario del admin"""
     __tablename__ = 'calendar_events'

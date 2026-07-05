@@ -1,0 +1,72 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Admins Google - Admin{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Admins via Google</h3>
+    <button type="button" class="btn btn-morena btn-sm" data-bs-toggle="modal" data-bs-target="#nuevoAdminEmailModal">
+        <i class="bi bi-person-plus"></i> Agregar Email
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <p class="text-muted small">
+            <i class="bi bi-info-circle"></i>
+            Los usuarios que inicien sesión con Google usando estos emails serán automáticamente administradores.
+        </p>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Agregado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ae in emails %}
+                    <tr>
+                        <td data-label="Email">{{ ae.email }}</td>
+                        <td data-label="Agregado">{{ ae.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td data-label="Acciones">
+                            <form method="POST" action="{{ url_for('admin.admin_email_delete', email_id=ae.id) }}" onsubmit="return confirm('¿Eliminar {{ ae.email }} de la lista de admins?')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-4">No hay emails registrados. Agregá uno para permitir acceso admin via Google.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Email Admin -->
+<div class="modal fade" id="nuevoAdminEmailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Email Admin</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" name="email" class="form-control" placeholder="colaborador@ejemplo.com" required>
+                    </div>
+                    <p class="text-muted small mb-0">Si ya existe un usuario con este email, será promovido a admin automáticamente.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-morena">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -7,7 +7,7 @@ from PIL import Image, ImageOps
 from extensions import db, csrf
 from models import (Product, ProductImage, Category, Tag, Order, OrderItem, Coupon, UserCoupon,
                     DiscountRule, PrizeWheel, PrizeWheelSegment, PrizeSpin, CalendarEvent,
-                    CustomizationGroup, CustomizationOption, User, StoreConfig)
+                    CustomizationGroup, CustomizationOption, User, StoreConfig, AdminEmail)
 from sqlalchemy import func
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -1171,3 +1171,80 @@ def client_edit(user_id):
     db.session.commit()
     flash(f'Cliente "{user.nombre}" actualizado.', 'success')
     return redirect(url_for('admin.clients'))
+
+
+# --- PERFIL ADMIN ---
+
+@admin_bp.route('/perfil', methods=['GET', 'POST'])
+@admin_required
+def profile():
+    if request.method == 'POST':
+        current_password = request.form.get('current_password', '')
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        if not current_user.check_password(current_password):
+            flash('La contraseña actual no es correcta.', 'danger')
+            return redirect(url_for('admin.profile'))
+
+        if not new_password or len(new_password) < 6:
+            flash('La nueva contraseña debe tener al menos 6 caracteres.', 'danger')
+            return redirect(url_for('admin.profile'))
+
+        if new_password != confirm_password:
+            flash('Las contraseñas nuevas no coinciden.', 'danger')
+            return redirect(url_for('admin.profile'))
+
+        current_user.set_password(new_password)
+        db.session.commit()
+        flash('Contraseña actualizada correctamente.', 'success')
+        return redirect(url_for('admin.profile'))
+
+    return render_template('admin/perfil.html')
+
+
+# --- ADMIN EMAILS (Google OAuth admins) ---
+
+@admin_bp.route('/admin-emails', methods=['GET', 'POST'])
+@admin_required
+def admin_emails():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        if not email:
+            flash('El email es obligatorio.', 'danger')
+            return redirect(url_for('admin.admin_emails'))
+
+        if AdminEmail.query.filter_by(email=email).first():
+            flash(f'"{email}" ya está en la lista.', 'warning')
+            return redirect(url_for('admin.admin_emails'))
+
+        ae = AdminEmail(email=email)
+        db.session.add(ae)
+
+        # Si ya existe un usuario con ese email, promoverlo a admin
+        user = User.query.filter_by(email=email).first()
+        if user:
+            user.is_admin = True
+
+        db.session.commit()
+        flash(f'"{email}" agregado como admin.', 'success')
+        return redirect(url_for('admin.admin_emails'))
+
+    emails = AdminEmail.query.order_by(AdminEmail.created_at.desc()).all()
+    return render_template('admin/admin_emails.html', emails=emails)
+
+
+@admin_bp.route('/admin-emails/<int:email_id>/eliminar', methods=['POST'])
+@admin_required
+def admin_email_delete(email_id):
+    ae = AdminEmail.query.get_or_404(email_id)
+
+    # Quitar is_admin al usuario con ese email si existe
+    user = User.query.filter_by(email=ae.email).first()
+    if user:
+        user.is_admin = False
+
+    db.session.delete(ae)
+    db.session.commit()
+    flash(f'"{ae.email}" eliminado de admins.', 'info')
+    return redirect(url_for('admin.admin_emails'))

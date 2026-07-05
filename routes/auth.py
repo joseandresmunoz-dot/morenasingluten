@@ -5,7 +5,7 @@ from authlib.integrations.flask_client import OAuth
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from config import Config
 from extensions import db
-from models import User
+from models import User, AdminEmail
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -167,6 +167,12 @@ def google_callback():
             db.session.add(user)
 
     user.email_verificado = True
+
+    # Promover a admin si el email está en la lista de admin emails
+    if not user.is_admin:
+        admin_email = AdminEmail.query.filter_by(email=user.email).first()
+        if admin_email:
+            user.is_admin = True
 
     db.session.commit()
     login_user(user)
