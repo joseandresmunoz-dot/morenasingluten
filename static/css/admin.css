@@ -469,7 +469,18 @@ body.dark-mode .input-group-text {
     color: #ccc;
 }
 
-body.dark-mode .card.text-center h4 {
+body.dark-mode .card-body.text-center h4,
+body.dark-mode .card-body.text-center h3 {
+    color: #e0e0e0;
+}
+
+body.dark-mode .card-body h6.text-muted {
+    color: #999 !important;
+}
+
+body.dark-mode .card-body h3,
+body.dark-mode .card-body h4,
+body.dark-mode .card-body h5 {
     color: #e0e0e0;
 }
 
