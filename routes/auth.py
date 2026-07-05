@@ -94,7 +94,7 @@ def register():
         except Exception:
             flash('Cuenta creada. No se pudo enviar el email de verificación, podés reenviarlo desde tu perfil.', 'warning')
 
-        login_user(user)
+        login_user(user, remember=True)
         return redirect(url_for('shop.index'))
 
     return render_template('auth/registro.html')
@@ -112,7 +112,7 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user and user.check_password(password):
-            login_user(user)
+            login_user(user, remember=True)
             next_page = request.form.get('next') or request.args.get('next')
             if user.email_verificado or user.google_id or user.is_admin:
                 flash('¡Bienvenido/a de vuelta!', 'success')
@@ -175,7 +175,7 @@ def google_callback():
             user.is_admin = True
 
     db.session.commit()
-    login_user(user)
+    login_user(user, remember=True)
 
     if not user.whatsapp:
         flash('Completá tu número de WhatsApp para finalizar tu registro.', 'info')
@@ -214,7 +214,7 @@ def verify_email():
         user.email_verificado = True
         db.session.commit()
 
-    login_user(user)
+    login_user(user, remember=True)
     flash('Email verificado correctamente.', 'success')
     return redirect(url_for('shop.index'))
 
