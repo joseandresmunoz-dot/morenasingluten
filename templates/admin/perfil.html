@@ -19,6 +19,7 @@
             <div class="card-body">
                 <h5 class="card-title">Cambiar Contraseña</h5>
                 <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label">Contraseña actual</label>
                         <input type="password" name="current_password" class="form-control" required>
