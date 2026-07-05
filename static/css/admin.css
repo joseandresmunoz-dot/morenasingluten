@@ -433,3 +433,50 @@ body.dark-mode .stat-card {
 body.dark-mode .opacity-75 {
     opacity: 0.6 !important;
 }
+
+body.dark-mode .table a {
+    color: #e8a098;
+}
+
+body.dark-mode .table a:hover {
+    color: var(--rosa);
+}
+
+body.dark-mode .table select.form-select {
+    background-color: #1e1e38;
+    border-color: #444;
+    color: #e0e0e0;
+    min-width: 130px !important;
+}
+
+body.dark-mode .card-header h6 {
+    color: #e0e0e0;
+}
+
+body.dark-mode .card-header a.btn-outline-secondary {
+    color: #ccc;
+    border-color: #555;
+}
+
+body.dark-mode .card-header a.btn-outline-secondary:hover {
+    background-color: #333;
+    color: #fff;
+}
+
+body.dark-mode .input-group-text {
+    background-color: #1e1e38;
+    border-color: #444;
+    color: #ccc;
+}
+
+body.dark-mode .card.text-center h4 {
+    color: #e0e0e0;
+}
+
+body.dark-mode .toast {
+    background-color: #252540 !important;
+}
+
+body.dark-mode .toast .btn-close {
+    filter: invert(1);
+}
