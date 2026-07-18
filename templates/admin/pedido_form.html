@@ -154,7 +154,8 @@
             }
         });
         document.getElementById('items-count').textContent = count;
-        document.getElementById('order-total').textContent = formatMoney(total + Number(document.getElementById('costo_envio')?.value || 0));
+        const costoEnvio = document.getElementById('tipo_entrega').value === 'domicilio' ? Number(document.getElementById('costo_envio')?.value || 0) : 0;
+        document.getElementById('order-total').textContent = formatMoney(total + costoEnvio);
     }
 
     function updateDeliveryFields() {

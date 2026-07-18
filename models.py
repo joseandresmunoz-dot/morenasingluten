@@ -17,6 +17,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=True)  # Null si usa Google OAuth
     whatsapp = db.Column(db.String(20), nullable=True)
     direccion = db.Column(db.String(300), nullable=True)
+    localidad = db.Column(db.String(100), nullable=True)
     google_id = db.Column(db.String(256), nullable=True, unique=True)
     avatar_url = db.Column(db.String(500), nullable=True)
     is_admin = db.Column(db.Boolean, default=False)

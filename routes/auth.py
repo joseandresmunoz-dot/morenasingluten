@@ -55,6 +55,7 @@ def register():
         nombre = request.form.get('nombre', '').strip()
         email = request.form.get('email', '').strip().lower()
         whatsapp = request.form.get('whatsapp', '').strip()
+        localidad = request.form.get('localidad', '').strip()
         direccion = request.form.get('direccion', '').strip()
         password = request.form.get('password', '')
         password2 = request.form.get('password2', '')
@@ -64,6 +65,8 @@ def register():
             errors.append('El nombre es obligatorio.')
         if not email:
             errors.append('El email es obligatorio.')
+        if not localidad:
+            errors.append('La localidad es obligatoria.')
         if not password or len(password) < 6:
             errors.append('La contraseña debe tener al menos 6 caracteres.')
         if password != password2:
@@ -74,13 +77,14 @@ def register():
         if errors:
             for e in errors:
                 flash(e, 'danger')
-            return render_template('auth/registro.html', nombre=nombre, email=email, whatsapp=whatsapp, direccion=direccion)
+            return render_template('auth/registro.html', nombre=nombre, email=email, whatsapp=whatsapp, localidad=localidad, direccion=direccion)
 
         user = User(
             email=email,
             username=email,
             nombre=nombre,
             whatsapp=whatsapp,
+            localidad=localidad,
             direccion=direccion,
             email_verificado=False
         )
@@ -253,11 +257,15 @@ def resend_verification_email():
 def complete_profile():
     if request.method == 'POST':
         whatsapp = request.form.get('whatsapp', '').strip()
+        localidad = request.form.get('localidad', '').strip()
         direccion = request.form.get('direccion', '').strip()
         if not whatsapp:
             flash('El número de WhatsApp es obligatorio.', 'danger')
+        elif not localidad:
+            flash('La localidad es obligatoria.', 'danger')
         else:
             current_user.whatsapp = whatsapp
+            current_user.localidad = localidad
             current_user.direccion = direccion or None
             db.session.commit()
             flash('¡Perfil completado!', 'success')

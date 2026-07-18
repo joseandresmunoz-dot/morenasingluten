@@ -33,8 +33,12 @@
                             <input type="tel" name="whatsapp" class="form-control" value="{{ current_user.whatsapp or '' }}" placeholder="+54 9 ..." required>
                         </div>
                         <div class="mb-3">
+                            <label class="form-label">Localidad <span class="text-danger">*</span></label>
+                            <input type="text" name="localidad" class="form-control" value="{{ current_user.localidad or '' }}" placeholder="Ej: Río Gallegos" required>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label">Domicilio <small class="text-muted">(opcional)</small></label>
-                            <input type="text" name="direccion" class="form-control" value="{{ current_user.direccion or '' }}" placeholder="Calle, número, piso/depto, localidad">
+                            <input type="text" name="direccion" class="form-control" value="{{ current_user.direccion or '' }}" placeholder="Calle, número, piso/depto">
                         </div>
                         <button type="submit" class="btn btn-morena w-100">Guardar</button>
                     </form>

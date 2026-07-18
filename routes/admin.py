@@ -562,6 +562,9 @@ def order_new():
             flash('Debés ingresar una dirección de entrega para envío a domicilio.', 'danger')
             return render_template('admin/pedido_form.html', users=users, products=products, config_tienda=config_tienda)
 
+        if tipo_entrega == 'retiro':
+            costo_envio = 0
+
         product_ids = request.form.getlist('product_id', type=int)
         cantidades = request.form.getlist('cantidad', type=int)
         items_data = []

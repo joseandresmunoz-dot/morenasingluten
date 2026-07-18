@@ -715,7 +715,8 @@ def build_whatsapp_message(order):
     lines = [f"🧁 *Nuevo Pedido - Morena Sin Gluten*",
              f"📋 Código: {order.codigo}",
              f"👤 Cliente: {order.user.nombre}",
-             f"📱 WhatsApp: {order.user.whatsapp}",
+              f"📱 WhatsApp: {order.user.whatsapp}",
+             f"📍 Localidad: {order.user.localidad or 'No especificada'}",
              f"📧 Email: {order.user.email}",
              "",
              "*Productos:*"]

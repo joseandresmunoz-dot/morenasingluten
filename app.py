@@ -105,6 +105,9 @@ def create_app():
         if 'direccion' not in user_columns:
             db.session.execute(text("ALTER TABLE users ADD COLUMN direccion VARCHAR(300)"))
             db.session.commit()
+        if 'localidad' not in user_columns:
+            db.session.execute(text("ALTER TABLE users ADD COLUMN localidad VARCHAR(100)"))
+            db.session.commit()
         user_coupon_columns = [c['name'] for c in inspector.get_columns('user_coupons')]
         if 'disponible' not in user_coupon_columns:
             db.session.execute(text("ALTER TABLE user_coupons ADD COLUMN disponible BOOLEAN DEFAULT FALSE"))
