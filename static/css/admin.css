@@ -322,8 +322,13 @@ body.dark-mode .table-responsive {
     background-color: transparent;
 }
 
-body.dark-mode .table th {
-    color: #999;
+body.dark-mode .table thead {
+    background-color: #111;
+}
+
+body.dark-mode .table thead th {
+    color: #fff;
+    border-bottom-color: #444;
 }
 
 body.dark-mode .table-hover tbody tr:hover {
