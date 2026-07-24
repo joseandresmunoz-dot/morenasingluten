@@ -37,13 +37,13 @@
                                                     <button type="button" class="btn btn-outline-secondary checkout-qty-decrement" aria-label="Disminuir cantidad">
                                                         <i class="bi bi-chevron-down"></i>
                                                     </button>
-                                                    <input type="number" min="1" max="99" class="form-control form-control-sm checkout-quantity text-center" value="{{ item.cantidad }}" data-index="{{ loop.index0 }}" data-price="{{ "%.2f"|format(item.precio) }}" aria-label="Cantidad de {{ item.product.nombre }}">
+                                                    <input type="number" min="1" max="99" class="form-control form-control-sm checkout-quantity text-center" value="{{ item.cantidad }}" data-index="{{ loop.index0 }}" data-price="{{ item.precio|numero }}" aria-label="Cantidad de {{ item.product.nombre }}">
                                                     <button type="button" class="btn btn-outline-secondary checkout-qty-increment" aria-label="Aumentar cantidad">
                                                         <i class="bi bi-chevron-up"></i>
                                                     </button>
                                                 </div>
                                             </td>
-                                            <td data-label="Subtotal" class="text-end checkout-item-subtotal">${{ "%.2f"|format(item.subtotal) }}</td>
+                                            <td data-label="Subtotal" class="text-end checkout-item-subtotal">${{ item.subtotal|numero }}</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -61,8 +61,8 @@
                             <strong>{{ c.codigo }}</strong>
                             <br>
                             <small class="text-muted">
-                                {% if c.tipo == 'porcentaje' %}{{ "%.0f"|format(c.valor) }}% de descuento
-                                {% elif c.tipo == 'monto_fijo' %}-${{ "%.0f"|format(c.valor) }}
+                                {% if c.tipo == 'porcentaje' %}{{ c.valor|numero }}% de descuento
+                                {% elif c.tipo == 'monto_fijo' %}-${{ c.valor|numero }}
                                 {% endif %}
                             </small>
                             {% if c.fecha_fin %}
@@ -87,7 +87,7 @@
                         <i class="bi bi-check-circle-fill text-success"></i>
                         <strong>Cupón aplicado:</strong> {{ coupon.codigo }}
                         <small class="text-muted">
-                            ({% if coupon.tipo == 'porcentaje' %}{{ "%.0f"|format(coupon.valor) }}% OFF{% elif coupon.tipo == 'monto_fijo' %}-${{ "%.0f"|format(coupon.valor) }}{% endif %})
+                            ({% if coupon.tipo == 'porcentaje' %}{{ coupon.valor|numero }}% OFF{% elif coupon.tipo == 'monto_fijo' %}-${{ coupon.valor|numero }}{% endif %})
                         </small>
                     </div>
                     <form method="POST" action="{{ url_for('shop.remove_coupon') }}">
@@ -108,7 +108,7 @@
                             <label class="form-label">¿Cómo querés recibir tu pedido?</label>
                             <select name="tipo_entrega" id="tipo_entrega" class="form-select">
                                 <option value="retiro" {% if tipo_entrega == 'retiro' %}selected{% endif %}>Retiro en local</option>
-                                <option value="domicilio" {% if tipo_entrega == 'domicilio' %}selected{% endif %}>Envío a domicilio (+${{ "%.2f"|format(envio_domicilio_costo) }})</option>
+                                <option value="domicilio" {% if tipo_entrega == 'domicilio' %}selected{% endif %}>Envío a domicilio (+${{ envio_domicilio_costo|numero }})</option>
                             </select>
                             <small class="text-muted d-block mt-1">Los pedidos para retirar se entregan en el horario seleccionado (16:00-18:00 hs).</small>
                         </div>
@@ -153,14 +153,14 @@
 
                     <div class="d-flex justify-content-between mb-2">
                         <span>Subtotal</span>
-                        <span id="checkout-subtotal" data-value="{{ "%.2f"|format(subtotal) }}">${{ "%.2f"|format(subtotal) }}</span>
+                        <span id="checkout-subtotal" data-value="{{ subtotal|numero }}">${{ subtotal|numero }}</span>
                     </div>
 
                     {% if discount_rules %}
                     {% for d in discount_rules %}
                     <div class="d-flex justify-content-between mb-1 text-success">
                         <small><i class="bi bi-tag-fill"></i> {{ d.nombre }}</small>
-                        <small>-${{ "%.2f"|format(d.descuento) }}</small>
+                        <small>-${{ d.descuento|numero }}</small>
                     </div>
                     {% endfor %}
                     {% endif %}
@@ -168,28 +168,28 @@
                     {% if coupon %}
                     <div class="d-flex justify-content-between mb-1 text-success">
                         <small><i class="bi bi-ticket-perforated"></i> Cupón: {{ coupon.codigo }}</small>
-                        <small>-${{ "%.2f"|format(descuento_cupon) }}</small>
+                        <small>-${{ descuento_cupon|numero }}</small>
                     </div>
                     {% endif %}
 
                     {% if costo_envio > 0 %}
                     <div class="d-flex justify-content-between mb-2">
                         <span>Envío a domicilio</span>
-                        <span id="checkout-shipping" data-value="{{ "%.2f"|format(costo_envio) }}">${{ "%.2f"|format(costo_envio) }}</span>
+                        <span id="checkout-shipping" data-value="{{ costo_envio|numero }}">${{ costo_envio|numero }}</span>
                     </div>
                     {% endif %}
 
                     {% if descuento_total > 0 %}
                     <div class="d-flex justify-content-between mb-2 text-success fw-bold">
                         <span>Descuento total</span>
-                        <span id="checkout-discount-total" data-value="{{ "%.2f"|format(descuento_total) }}">-${{ "%.2f"|format(descuento_total) }}</span>
+                        <span id="checkout-discount-total" data-value="{{ descuento_total|numero }}">-${{ descuento_total|numero }}</span>
                     </div>
                     {% endif %}
 
                     <hr>
                     <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
                         <span>TOTAL</span>
-                        <span id="checkout-total" data-value="{{ "%.2f"|format(total) }}" class="text-rosa">${{ "%.2f"|format(total) }}</span>
+                        <span id="checkout-total" data-value="{{ total|numero }}" class="text-rosa">${{ total|numero }}</span>
                     </div>
 
                     <!-- Información de seña -->
@@ -197,8 +197,8 @@
                         <h6 class="alert-heading"><i class="bi bi-info-circle-fill"></i> Información de Pago</h6>
                         <hr>
                         <p class="mb-1"><strong>Para confirmar tu pedido debés abonar la seña (50%):</strong></p>
-                        <p class="fs-4 fw-bold text-center my-3 text-rosa" id="checkout-senia" data-value="{{ "%.2f"|format(senia) }}">${{ "%.2f"|format(senia) }}</p>
-                        <p class="mb-1">El restante <strong id="checkout-restante">${{ "%.2f"|format(total - senia) }}</strong> lo abonás al momento de retirar.</p>
+                        <p class="fs-4 fw-bold text-center my-3 text-rosa" id="checkout-senia" data-value="{{ senia|numero }}">${{ senia|numero }}</p>
+                        <p class="mb-1">El restante <strong id="checkout-restante">${{ total - senia|numero }}</strong> lo abonás al momento de retirar.</p>
                         <hr>
                         <div class="text-center">
                             <p class="mb-1"><strong>Datos para transferencia:</strong></p>
@@ -258,7 +258,7 @@
         return parseFloat(cleaned) || 0;
     };
 
-    const formatMoney = amount => Number(amount).toFixed(2);
+    const formatMoney = amount => '$' + Number(amount).toLocaleString('es-AR', { maximumFractionDigits: 0 });
 
     const recalcTotals = () => {
         let subtotal = 0;
@@ -279,7 +279,7 @@
 
         if (subtotalEl) {
             subtotalEl.textContent = '$' + formatMoney(subtotal);
-            subtotalEl.dataset.value = subtotal.toFixed(2);
+            subtotalEl.dataset.value = subtotal.toLocaleString('es-AR', { maximumFractionDigits: 0 });
         }
 
         const shipping = shippingEl ? parseNumber(shippingEl.dataset.value || shippingEl.textContent) : 0;
@@ -288,12 +288,12 @@
 
         if (totalEl) {
             totalEl.textContent = '$' + formatMoney(total);
-            totalEl.dataset.value = total.toFixed(2);
+            totalEl.dataset.value = total.toLocaleString('es-AR', { maximumFractionDigits: 0 });
         }
         if (seniaEl) {
             const senia = total / 2;
             seniaEl.textContent = '$' + formatMoney(senia);
-            seniaEl.dataset.value = senia.toFixed(2);
+            seniaEl.dataset.value = senia.toLocaleString('es-AR', { maximumFractionDigits: 0 });
         }
         if (restanteEl) {
             restanteEl.textContent = '$' + formatMoney(total / 2);

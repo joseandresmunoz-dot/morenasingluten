@@ -23,6 +23,7 @@
                         <th>Precio</th>
                         <th>Personalizable</th>
                         <th>Destacado</th>
+                        <th>Tienda</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -45,7 +46,7 @@
                             {% endfor %}
                         </td>
                         <td data-label="Categoría">{{ product.category.nombre if product.category else '-' }}</td>
-                        <td data-label="Precio">${{ "%.2f"|format(product.precio) }}</td>
+                        <td data-label="Precio">${{ product.precio|numero }}</td>
                         <td data-label="Personalizable">
                             {% if product.es_personalizable %}
                             <span class="badge bg-info">Sí</span>
@@ -59,6 +60,13 @@
                             <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Sí</span>
                             {% else %}
                             <span class="text-muted">No</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Tienda">
+                            {% if product.visible_tienda %}
+                            <span class="badge bg-success"><i class="bi bi-eye"></i> Visible</span>
+                            {% else %}
+                            <span class="badge bg-secondary"><i class="bi bi-eye-slash"></i> Oculto</span>
                             {% endif %}
                         </td>
                         <td data-label="Estado">

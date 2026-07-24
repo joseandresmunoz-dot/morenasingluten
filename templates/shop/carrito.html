@@ -29,7 +29,7 @@
                                 {% endfor %}
                             </small>
                             {% endif %}
-                            <small class="text-muted d-block">${{ "%.2f"|format(item.precio) }} c/u</small>
+                            <small class="text-muted d-block">${{ item.precio|numero }} c/u</small>
                         </div>
                         <div class="col-12 col-sm-6 col-md-4 d-flex justify-content-center">
                             <div class="quantity-control text-center">
@@ -37,13 +37,13 @@
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="index" value="{{ loop.index0 }}">
                                     <button type="button" class="btn btn-outline-secondary btn-sm qty-action qty-decrement" aria-label="Disminuir cantidad"><i class="bi bi-chevron-down"></i></button>
-                                    <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1" max="50" class="form-control form-control-sm cart-quantity-input text-center" style="width: 70px;" data-index="{{ loop.index0 }}" data-price="{{ "%.2f"|format(item.precio) }}" aria-label="Cantidad de {{ item.product.nombre }}">
+                                    <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1" max="50" class="form-control form-control-sm cart-quantity-input text-center" style="width: 70px;" data-index="{{ loop.index0 }}" data-price="{{ item.precio|numero }}" aria-label="Cantidad de {{ item.product.nombre }}">
                                     <button type="button" class="btn btn-outline-secondary btn-sm qty-action qty-increment" aria-label="Aumentar cantidad"><i class="bi bi-chevron-up"></i></button>
                                 </form>
                             </div>
                         </div>
                         <div class="col-6 col-sm-3 text-sm-end">
-                            <strong class="cart-item-subtotal">${{ "%.2f"|format(item.subtotal) }}</strong>
+                            <strong class="cart-item-subtotal">${{ item.subtotal|numero }}</strong>
                         </div>
                         <div class="col-6 col-sm-1 text-sm-end">
                             <form method="POST" action="{{ url_for('shop.remove_from_cart') }}">
@@ -90,8 +90,8 @@
                             <strong>{{ c.codigo }}</strong>
                             <br>
                             <small class="text-muted">
-                                {% if c.tipo == 'porcentaje' %}{{ "%.0f"|format(c.valor) }}% de descuento
-                                {% elif c.tipo == 'monto_fijo' %}-${{ "%.0f"|format(c.valor) }}
+                                {% if c.tipo == 'porcentaje' %}{{ c.valor|numero }}% de descuento
+                                {% elif c.tipo == 'monto_fijo' %}-${{ c.valor|numero }}
                                 {% endif %}
                             </small>
                             {% if c.fecha_fin %}
@@ -117,14 +117,14 @@
                     <h5 class="mb-3">Resumen</h5>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Subtotal</span>
-                        <span id="cart-subtotal" data-value="{{ "%.2f"|format(subtotal) }}">${{ "%.2f"|format(subtotal) }}</span>
+                        <span id="cart-subtotal" data-value="{{ subtotal|numero }}">${{ subtotal|numero }}</span>
                     </div>
 
                     {% if discount_rules %}
                     {% for d in discount_rules %}
                     <div class="d-flex justify-content-between mb-1 text-success">
                         <small>{{ d.nombre }}</small>
-                        <small>-${{ "%.2f"|format(d.descuento) }}</small>
+                        <small>-${{ d.descuento|numero }}</small>
                     </div>
                     {% endfor %}
                     {% endif %}
@@ -132,7 +132,7 @@
                     <hr>
                     <div class="d-flex justify-content-between fw-bold mb-3">
                         <span>Total estimado</span>
-                        <span id="cart-total" class="precio" data-discount="{{ "%.2f"|format(descuento_reglas) }}">${{ "%.2f"|format(subtotal - descuento_reglas) }}</span>
+                        <span id="cart-total" class="precio" data-discount="{{ descuento_reglas|numero }}">${{ subtotal - descuento_reglas|numero }}</span>
                     </div>
 
                     <!-- Recordatorio seña -->
@@ -140,7 +140,7 @@
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         <strong>Recordá:</strong> Para confirmar tu pedido debés abonar el <strong>50% como seña</strong>. El otro 50% lo abonás al retirar.
                         <hr class="my-2">
-                        <strong>Seña estimada: ${{ "%.2f"|format((subtotal - descuento_reglas) / 2) }}</strong><br>
+                        <strong>Seña estimada: ${{ (subtotal - descuento_reglas|numero / 2) }}</strong><br>
                         <small>Alias Mercado Pago: <strong>lacocinaceliaco</strong></small><br>
                         <small>Titular: Ana Carolina Iannovelli</small>
                     </div>
@@ -160,7 +160,7 @@
     const cartSubtotalEl = document.getElementById('cart-subtotal');
     const cartTotalEl = document.getElementById('cart-total');
 
-    const formatMoney = amount => Number(amount).toFixed(2);
+    const formatMoney = amount => '$' + Number(amount).toLocaleString('es-AR', { maximumFractionDigits: 0 });
     const parseNumber = value => {
         if (typeof value === 'number') return value;
         const cleaned = String(value).replace(/[^0-9.-]/g, '');
@@ -181,7 +181,7 @@
         });
         if (cartSubtotalEl) {
             cartSubtotalEl.textContent = '$' + formatMoney(subtotal);
-            cartSubtotalEl.dataset.value = subtotal.toFixed(2);
+            cartSubtotalEl.dataset.value = subtotal.toLocaleString('es-AR', { maximumFractionDigits: 0 });
         }
         if (cartTotalEl) {
             const discount = parseNumber(cartTotalEl.dataset.discount || 0);

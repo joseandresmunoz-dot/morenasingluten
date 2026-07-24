@@ -36,8 +36,8 @@
                                 {% endif %}
                             </td>
                             <td data-label="Cantidad" class="text-center">{{ item.cantidad }}</td>
-                            <td data-label="P. Unit." class="text-end">${{ "%.2f"|format(item.precio_unitario) }}</td>
-                            <td data-label="Subtotal" class="text-end">${{ "%.2f"|format(item.subtotal) }}</td>
+                            <td data-label="P. Unit." class="text-end">${{ item.precio_unitario|numero }}</td>
+                            <td data-label="Subtotal" class="text-end">${{ item.subtotal|numero }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -82,7 +82,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-1">
                     <span>Subtotal:</span>
-                    <span>${{ "%.2f"|format(order.subtotal) }}</span>
+                    <span>${{ order.subtotal|numero }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-1">
                     <span>Entrega:</span>
@@ -91,7 +91,7 @@
                 {% if (order.tipo_entrega or 'retiro') == 'domicilio' %}
                 <div class="d-flex justify-content-between mb-1">
                     <span>Costo envío:</span>
-                    <span>${{ "%.2f"|format(order.costo_envio or 0) }}</span>
+                    <span>${{ order.costo_envio or 0|numero }}</span>
                 </div>
                 {% if order.direccion_entrega %}
                 <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ order.direccion_entrega }}</p>
@@ -100,17 +100,17 @@
                 {% if order.descuento > 0 %}
                 <div class="d-flex justify-content-between mb-1 text-success">
                     <span>Descuento:</span>
-                    <span>-${{ "%.2f"|format(order.descuento) }}</span>
+                    <span>-${{ order.descuento|numero }}</span>
                 </div>
                 {% endif %}
                 <hr>
                 <div class="d-flex justify-content-between fw-bold">
                     <span>Total:</span>
-                    <span>${{ "%.2f"|format(order.total) }}</span>
+                    <span>${{ order.total|numero }}</span>
                 </div>
                 <div class="d-flex justify-content-between text-rosa fw-bold">
                     <span>Seña (50%):</span>
-                    <span>${{ "%.2f"|format(order.senia) }}</span>
+                    <span>${{ order.senia|numero }}</span>
                 </div>
                 {% if order.fecha_retiro %}
                 <hr>

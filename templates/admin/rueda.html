@@ -130,7 +130,7 @@
             return;
         }
         if (tipo === 'descuento_fijo') {
-            textoInput.value = `$${valor.toFixed(2)} descuento`;
+            textoInput.value = `$${valor.toLocaleString('es-AR', { maximumFractionDigits: 0 })} descuento`;
             return;
         }
         if (tipo === 'producto_gratis') {

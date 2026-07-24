@@ -95,7 +95,7 @@
                             {% endif %}
                         </td>
                         <td data-label="Pedidos">{{ user.orders.count() }}</td>
-                        <td data-label="Total Gastado">${{ "%.2f"|format(user.total_spent) }}</td>
+                        <td data-label="Total Gastado">${{ user.total_spent|numero }}</td>
                         <td data-label="Estado">
                             {% if user.is_active_user %}
                             <span class="badge bg-success">Activo</span>

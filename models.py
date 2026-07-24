@@ -95,6 +95,7 @@ class Product(db.Model):
     es_personalizable = db.Column(db.Boolean, default=False)
     stock_disponible = db.Column(db.Boolean, default=True)
     activo = db.Column(db.Boolean, default=True)
+    visible_tienda = db.Column(db.Boolean, default=True)
     destacado = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

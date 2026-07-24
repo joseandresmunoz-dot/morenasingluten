@@ -1,0 +1,129 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Dashboard Mensual - Admin{% endblock %}
+{% block content %}
+<h3 class="mb-3">Dashboard Mensual</h3>
+
+<form method="GET" class="mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <label class="form-label mb-0 fw-bold">Mes:</label>
+        <select name="mes" class="form-select" style="width: auto;" onchange="this.form.submit()">
+            {% for valor, texto in meses|reverse %}
+            <option value="{{ valor }}" {{ 'selected' if valor == mes_seleccionado else '' }}>{{ texto }}</option>
+            {% endfor %}
+        </select>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Dashboard actual</a>
+    </div>
+</form>
+
+<h5 class="text-muted mb-3">{{ mes_titulo }}</h5>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card bg-rosa text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-white-50">Pedidos</h6>
+                        <h3>{{ ventas }}</h3>
+                    </div>
+                    <i class="bi bi-bag-check" style="font-size: 2rem; opacity: 0.5;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-white-50">Ingresos</h6>
+                        <h3>${{ ingresos|numero }}</h3>
+                    </div>
+                    <i class="bi bi-cash-stack" style="font-size: 2rem; opacity: 0.5;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-white-50">Productos vendidos</h6>
+                        <h3>{{ productos_vendidos }}</h3>
+                    </div>
+                    <i class="bi bi-box-seam" style="font-size: 2rem; opacity: 0.5;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-dark opacity-50">Clientes nuevos</h6>
+                        <h3>{{ clientes_nuevos }}</h3>
+                    </div>
+                    <i class="bi bi-people" style="font-size: 2rem; opacity: 0.5;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h6 class="mb-0">Ingresos por envíos</h6></div>
+            <div class="card-body text-center">
+                <h4>${{ envio_ingresos|numero }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Top productos -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><h6 class="mb-0">Top Productos</h6></div>
+            <div class="card-body">
+                {% for nombre, total in top_productos %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>{{ nombre }}</span>
+                    <span class="badge bg-rosa">{{ total }}</span>
+                </div>
+                {% endfor %}
+                {% if not top_productos %}
+                <p class="text-muted small">Sin datos este mes.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Ranking clientes -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><h6 class="mb-0">Ranking Clientes</h6></div>
+            <div class="card-body">
+                {% for nombre, pedidos, total_gastado in ranking_clientes %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <span class="badge bg-secondary me-2">{{ loop.index }}</span>
+                        <span>{{ nombre }}</span>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted">{{ pedidos }} pedidos</small><br>
+                        <span class="fw-bold">${{ total_gastado|numero }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not ranking_clientes %}
+                <p class="text-muted small">Sin datos este mes.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

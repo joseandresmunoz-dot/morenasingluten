@@ -71,7 +71,7 @@
             {% endif %}
 
             {% if current_user.is_authenticated %}
-            <h3 class="precio mt-3">${{ "%.2f"|format(product.precio) }}</h3>
+            <h3 class="precio mt-3">${{ product.precio|numero }}</h3>
 
             <form method="POST" action="{{ url_for('shop.add_to_cart') }}" class="mt-4">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -119,7 +119,7 @@
                                     <div>
                                         {{ option.nombre }}
                                         {% if option.precio_extra > 0 and current_user.is_authenticated %}
-                                        <span class="text-rosa">(+${{ "%.2f"|format(option.precio_extra) }} c/u)</span>
+                                        <span class="text-rosa">(+${{ option.precio_extra|numero }} c/u)</span>
                                         {% endif %}
                                     </div>
                                     <div class="d-flex align-items-center gap-1">

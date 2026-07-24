@@ -16,9 +16,9 @@
                         <div class="card-body text-center">
                             <div class="mb-2">
                                 {% if coupon.tipo == 'porcentaje' %}
-                                <span class="badge bg-rosa fs-5">{{ "%.0f"|format(coupon.valor) }}% OFF</span>
+                                <span class="badge bg-rosa fs-5">{{ coupon.valor|numero }}% OFF</span>
                                 {% elif coupon.tipo == 'monto_fijo' %}
-                                <span class="badge bg-rosa fs-5">${{ "%.0f"|format(coupon.valor) }} OFF</span>
+                                <span class="badge bg-rosa fs-5">${{ coupon.valor|numero }} OFF</span>
                                 {% endif %}
                             </div>
                             <p class="mb-1"><strong>{{ coupon.codigo }}</strong></p>
@@ -60,14 +60,14 @@
                 <tr>
                     <td><strong>{{ order.codigo }}</strong></td>
                     <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                    <td>${{ "%.2f"|format(order.total) }}</td>
+                    <td>${{ order.total|numero }}</td>
                     <td>
                         {{ (order.tipo_entrega or 'retiro')|replace('_', ' ')|title }}
                         {% if (order.tipo_entrega or 'retiro') == 'domicilio' and order.costo_envio > 0 %}
-                        <br><small class="text-muted">Envío: ${{ "%.2f"|format(order.costo_envio) }}</small>
+                        <br><small class="text-muted">Envío: ${{ order.costo_envio|numero }}</small>
                         {% endif %}
                     </td>
-                    <td>${{ "%.2f"|format(order.senia) }}</td>
+                    <td>${{ order.senia|numero }}</td>
                     <td>
                         {% set status_colors = {
                             'pendiente': 'warning',

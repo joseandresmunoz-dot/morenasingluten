@@ -85,7 +85,7 @@
                             </div>
                             <div class="mt-auto pt-2">
                                 {% if current_user.is_authenticated %}
-                                <p class="precio mb-2">${{ "%.2f"|format(product.precio) }}</p>
+                                <p class="precio mb-2">${{ product.precio|numero }}</p>
                                 <a href="{{ url_for('shop.product_detail', product_id=product.id) }}" class="btn btn-sm btn-morena w-100">
                                     {% if product.es_personalizable %}
                                         <i class="bi bi-sliders"></i> Personalizar

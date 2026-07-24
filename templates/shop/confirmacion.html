@@ -36,7 +36,7 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-center">{{ item.cantidad }}</td>
-                                <td class="text-end">${{ "%.2f"|format(item.subtotal) }}</td>
+                                <td class="text-end">${{ item.subtotal|numero }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -45,7 +45,7 @@
                     <hr>
                     <div class="d-flex justify-content-between">
                         <span>Subtotal:</span>
-                        <span>${{ "%.2f"|format(order.subtotal) }}</span>
+                        <span>${{ order.subtotal|numero }}</span>
                     </div>
                     <div class="d-flex justify-content-between">
                         <span>Entrega:</span>
@@ -54,7 +54,7 @@
                     {% if (order.tipo_entrega or 'retiro') == 'domicilio' and order.costo_envio > 0 %}
                     <div class="d-flex justify-content-between">
                         <span>Envío:</span>
-                        <span>${{ "%.2f"|format(order.costo_envio) }}</span>
+                        <span>${{ order.costo_envio|numero }}</span>
                     </div>
                     {% endif %}
                     {% if (order.tipo_entrega or 'retiro') == 'domicilio' and order.direccion_entrega %}
@@ -66,12 +66,12 @@
                     {% if order.descuento > 0 %}
                     <div class="d-flex justify-content-between text-success">
                         <span>Descuento:</span>
-                        <span>-${{ "%.2f"|format(order.descuento) }}</span>
+                        <span>-${{ order.descuento|numero }}</span>
                     </div>
                     {% endif %}
                     <div class="d-flex justify-content-between fw-bold fs-5 mt-2">
                         <span>TOTAL:</span>
-                        <span class="text-rosa">${{ "%.2f"|format(order.total) }}</span>
+                        <span class="text-rosa">${{ order.total|numero }}</span>
                     </div>
                 </div>
             </div>
@@ -80,11 +80,11 @@
             <div class="card border-warning mb-4">
                 <div class="card-body text-center">
                     <h5><i class="bi bi-credit-card-2-front"></i> Aboná la Seña para Confirmar</h5>
-                    <p class="fs-3 fw-bold text-rosa my-3">${{ "%.2f"|format(order.senia) }}</p>
+                    <p class="fs-3 fw-bold text-rosa my-3">${{ order.senia|numero }}</p>
                     <p>Alias Mercado Pago: <strong class="fs-5">{{ mp_alias }}</strong></p>
                     <p>Titular: <strong>{{ mp_titular }}</strong></p>
                     <hr>
-                    <p class="text-muted small">El restante <strong>${{ "%.2f"|format(order.total - order.senia) }}</strong> lo abonás al retirar.</p>
+                    <p class="text-muted small">El restante <strong>${{ order.total - order.senia|numero }}</strong> lo abonás al retirar.</p>
                     <p class="text-muted small">Una vez transferida la seña, enviá el comprobante por WhatsApp.</p>
                 </div>
             </div>

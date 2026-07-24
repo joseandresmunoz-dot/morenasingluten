@@ -50,6 +50,23 @@ body {
     transition: all 0.2s;
 }
 
+.admin-sidebar .nav-link[data-bs-toggle="collapse"] {
+    cursor: pointer;
+}
+
+.admin-sidebar .nav-link[data-bs-toggle="collapse"] .bi-chevron-down {
+    transition: transform 0.2s;
+}
+
+.admin-sidebar .nav-link[data-bs-toggle="collapse"][aria-expanded="true"] .bi-chevron-down {
+    transform: rotate(180deg);
+}
+
+.admin-sidebar .collapse .nav-link {
+    padding: 0.5rem 1.5rem 0.5rem 2.5rem;
+    font-size: 0.85rem;
+}
+
 .admin-sidebar .nav-link:hover {
     color: #fff;
     background: rgba(255,255,255,0.05);

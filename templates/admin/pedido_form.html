@@ -90,7 +90,7 @@
                                         <select name="product_id" class="form-select product-select" required>
                                             <option value="">Seleccionar producto</option>
                                             {% for product in products %}
-                                            <option value="{{ product.id }}" data-price="{{ product.precio }}">{{ product.nombre }} - ${{ "%.2f"|format(product.precio) }}</option>
+                                            <option value="{{ product.id }}" data-price="{{ product.precio }}">{{ product.nombre }} - ${{ product.precio|numero }}</option>
                                             {% endfor %}
                                         </select>
                                     </td>
@@ -126,7 +126,7 @@
     const products = Array.from(document.querySelectorAll('.product-select')).map(select => select.cloneNode(true).outerHTML);
 
     function formatMoney(value) {
-        return '$' + Number(value).toFixed(2);
+        return '$' + Number(value).toLocaleString('es-AR', { maximumFractionDigits: 0 });
     }
 
     function updateRow(row) {

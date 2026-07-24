@@ -83,6 +83,20 @@ def create_app():
             return redirect(url_for('auth.login', next=request.form.get('next') or request.args.get('next')))
         return e.description, 400
 
+    # Template filter: formato de números con separador de miles (punto) y decimales solo si los tiene
+    @app.template_filter('numero')
+    def formato_numero(value):
+        try:
+            val = float(value) if value else 0
+            if val == int(val):
+                # Entero: solo separador de miles
+                return f'{int(val):,}'.replace(',', '.')
+            else:
+                # Tiene decimales: formato argentino (punto miles, coma decimales)
+                return f'{val:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+        except Exception:
+            return '0'
+
     # Crear tablas si no existen
     with app.app_context():
         import models  # noqa: F401
@@ -102,6 +116,12 @@ def create_app():
         if 'destacado' not in product_columns:
             db.session.execute(text("ALTER TABLE products ADD COLUMN destacado BOOLEAN DEFAULT FALSE"))
             db.session.commit()
+        if 'visible_tienda' not in product_columns:
+            try:
+                db.session.execute(text("ALTER TABLE products ADD COLUMN visible_tienda BOOLEAN DEFAULT TRUE"))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
         if 'direccion' not in user_columns:
             db.session.execute(text("ALTER TABLE users ADD COLUMN direccion VARCHAR(300)"))
             db.session.commit()
@@ -175,6 +195,16 @@ def create_app():
         from flask import session
         cart = session.get('cart', [])
         return {'cart_count': len(cart)}
+
+    # Template filter para formatear números: separador de miles con punto, sin decimales
+    @app.template_filter('numero')
+    def formato_numero(value):
+        try:
+            if value is None:
+                return '0'
+            return f'{int(round(float(value))):,}'.replace(',', '.')
+        except Exception:
+            return '0'
 
     return app
 

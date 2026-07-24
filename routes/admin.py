@@ -12,6 +12,24 @@ from sqlalchemy import func
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+MESES_ES = {
+    1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+    5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+    9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+}
+
+MESES_CORTOS_ES = {
+    1: 'Ene', 2: 'Feb', 3: 'Mar', 4: 'Abr',
+    5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Ago',
+    9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dic'
+}
+
+def mes_anio(dt):
+    return f"{MESES_ES[dt.month]} {dt.year}"
+
+def mes_corto(dt):
+    return MESES_CORTOS_ES[dt.month]
+
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -94,51 +112,243 @@ def build_wheel_segment_text(tipo, valor, texto=''):
 def dashboard():
     today = datetime.utcnow().date()
     month_start = today.replace(day=1)
+    month_end = (month_start + timedelta(days=32)).replace(day=1)
     config_tienda = StoreConfig.get_or_create()
-
-    total_ventas = Order.query.filter(Order.status.in_(['confirmado', 'entregado', 'senia_pagada', 'en_preparacion', 'listo'])).count()
-    total_ingresos = db.session.query(func.coalesce(func.sum(Order.total), 0)).filter(
-        Order.status.in_(['confirmado', 'entregado', 'senia_pagada', 'en_preparacion', 'listo'])
-    ).scalar()
 
     ventas_mes = Order.query.filter(
         Order.created_at >= datetime.combine(month_start, datetime.min.time()),
+        Order.created_at < datetime.combine(month_end, datetime.min.time()),
         Order.status.in_(['confirmado', 'entregado', 'senia_pagada', 'en_preparacion', 'listo'])
     ).count()
 
     ingresos_mes = db.session.query(func.coalesce(func.sum(Order.total), 0)).filter(
         Order.created_at >= datetime.combine(month_start, datetime.min.time()),
+        Order.created_at < datetime.combine(month_end, datetime.min.time()),
         Order.status.in_(['confirmado', 'entregado', 'senia_pagada', 'en_preparacion', 'listo'])
     ).scalar()
 
     ingresos_envio_mes = db.session.query(func.coalesce(func.sum(Order.costo_envio), 0)).filter(
         Order.created_at >= datetime.combine(month_start, datetime.min.time()),
+        Order.created_at < datetime.combine(month_end, datetime.min.time()),
         Order.tipo_entrega == 'domicilio',
         Order.status.in_(['confirmado', 'entregado', 'senia_pagada', 'en_preparacion', 'listo'])
     ).scalar()
 
-    productos_vendidos = db.session.query(func.coalesce(func.sum(OrderItem.cantidad), 0)).join(Order).filter(
+    productos_vendidos_mes = db.session.query(func.coalesce(func.sum(OrderItem.cantidad), 0)).join(Order).filter(
+        Order.created_at >= datetime.combine(month_start, datetime.min.time()),
+        Order.created_at < datetime.combine(month_end, datetime.min.time()),
         Order.status.in_(['confirmado', 'entregado', 'senia_pagada', 'en_preparacion', 'listo'])
     ).scalar()
 
-    clientes_total = User.query.filter_by(is_admin=False).count()
+    clientes_nuevos_mes = User.query.filter(
+        User.created_at >= datetime.combine(month_start, datetime.min.time()),
+        User.created_at < datetime.combine(month_end, datetime.min.time()),
+        User.is_admin == False
+    ).count()
 
     pedidos_recientes = Order.query.order_by(Order.created_at.desc()).limit(10).all()
 
-    top_productos = db.session.query(
+    top_productos_mes = db.session.query(
         Product.nombre,
         func.sum(OrderItem.cantidad).label('total_vendido')
     ).join(OrderItem).join(Order).filter(
+        Order.created_at >= datetime.combine(month_start, datetime.min.time()),
+        Order.created_at < datetime.combine(month_end, datetime.min.time()),
         Order.status.in_(['confirmado', 'entregado', 'senia_pagada', 'en_preparacion', 'listo'])
     ).group_by(Product.nombre).order_by(func.sum(OrderItem.cantidad).desc()).limit(5).all()
 
     return render_template('admin/dashboard.html',
-                           total_ventas=total_ventas, total_ingresos=float(total_ingresos),
                            ventas_mes=ventas_mes, ingresos_mes=float(ingresos_mes),
-                           productos_vendidos=int(productos_vendidos), clientes_total=clientes_total,
-                           pedidos_recientes=pedidos_recientes, top_productos=top_productos,
+                           productos_vendidos_mes=int(productos_vendidos_mes),
+                           clientes_nuevos_mes=clientes_nuevos_mes,
+                           pedidos_recientes=pedidos_recientes, top_productos=top_productos_mes,
                            envio_domicilio_costo=float(config_tienda.envio_domicilio_costo or 0),
-                           ingresos_envio_mes=float(ingresos_envio_mes))
+                           ingresos_envio_mes=float(ingresos_envio_mes),
+                           mes_actual=mes_anio(month_start))
+
+
+@admin_bp.route('/dashboard/mensual')
+@admin_required
+def dashboard_mensual():
+    today = datetime.utcnow().date()
+    mesSeleccionado = request.args.get('mes', today.strftime('%Y-%m'))
+    try:
+        selected_date = datetime.strptime(mesSeleccionado, '%Y-%m').date()
+    except ValueError:
+        selected_date = today
+    month_start = selected_date.replace(day=1)
+    month_end = (month_start + timedelta(days=32)).replace(day=1)
+
+    status_filter = Order.status.in_(['confirmado', 'entregado', 'senia_pagada', 'en_preparacion', 'listo'])
+
+    ventas = Order.query.filter(
+        Order.created_at >= datetime.combine(month_start, datetime.min.time()),
+        Order.created_at < datetime.combine(month_end, datetime.min.time()),
+        status_filter
+    ).count()
+
+    ingresos = db.session.query(func.coalesce(func.sum(Order.total), 0)).filter(
+        Order.created_at >= datetime.combine(month_start, datetime.min.time()),
+        Order.created_at < datetime.combine(month_end, datetime.min.time()),
+        status_filter
+    ).scalar()
+
+    envio_ingresos = db.session.query(func.coalesce(func.sum(Order.costo_envio), 0)).filter(
+        Order.created_at >= datetime.combine(month_start, datetime.min.time()),
+        Order.created_at < datetime.combine(month_end, datetime.min.time()),
+        Order.tipo_entrega == 'domicilio',
+        status_filter
+    ).scalar()
+
+    productos_vendidos = db.session.query(func.coalesce(func.sum(OrderItem.cantidad), 0)).join(Order).filter(
+        Order.created_at >= datetime.combine(month_start, datetime.min.time()),
+        Order.created_at < datetime.combine(month_end, datetime.min.time()),
+        status_filter
+    ).scalar()
+
+    clientes_nuevos = User.query.filter(
+        User.created_at >= datetime.combine(month_start, datetime.min.time()),
+        User.created_at < datetime.combine(month_end, datetime.min.time()),
+        User.is_admin == False
+    ).count()
+
+    top_productos = db.session.query(
+        Product.nombre,
+        func.sum(OrderItem.cantidad).label('total')
+    ).join(OrderItem).join(Order).filter(
+        Order.created_at >= datetime.combine(month_start, datetime.min.time()),
+        Order.created_at < datetime.combine(month_end, datetime.min.time()),
+        status_filter
+    ).group_by(Product.nombre).order_by(func.sum(OrderItem.cantidad).desc()).limit(10).all()
+
+    ranking_clientes = db.session.query(
+        User.nombre,
+        func.count(Order.id).label('pedidos'),
+        func.coalesce(func.sum(Order.total), 0).label('total_gastado')
+    ).join(Order).filter(
+        Order.created_at >= datetime.combine(month_start, datetime.min.time()),
+        Order.created_at < datetime.combine(month_end, datetime.min.time()),
+        status_filter
+    ).group_by(User.id, User.nombre).order_by(func.sum(Order.total).desc()).limit(10).all()
+
+    meses = []
+    earliest = db.session.query(func.min(Order.created_at)).scalar()
+    if earliest:
+        start = earliest.replace(day=1)
+        current = start
+        while current <= datetime.utcnow():
+            meses.append((current.strftime('%Y-%m'), mes_anio(current)))
+            current = (current + timedelta(days=32)).replace(day=1)
+
+    return render_template('admin/dashboard_mensual.html',
+                           ventas=ventas, ingresos=float(ingresos),
+                           envio_ingresos=float(envio_ingresos),
+                           productos_vendidos=int(productos_vendidos),
+                           clientes_nuevos=clientes_nuevos,
+                           top_productos=top_productos,
+                           ranking_clientes=ranking_clientes,
+                           meses=meses, mes_seleccionado=mesSeleccionado,
+                           mes_titulo=mes_anio(selected_date))
+
+
+@admin_bp.route('/dashboard/anual')
+@admin_required
+def dashboard_anual():
+    today = datetime.utcnow().date()
+    anioSeleccionado = request.args.get('anio', str(today.year))
+    try:
+        anio = int(anioSeleccionado)
+    except ValueError:
+        anio = today.year
+
+    anio_start = datetime(anio, 1, 1)
+    anio_end = datetime(anio + 1, 1, 1)
+    status_filter = Order.status.in_(['confirmado', 'entregado', 'senia_pagada', 'en_preparacion', 'listo'])
+
+    ventas = Order.query.filter(
+        Order.created_at >= anio_start,
+        Order.created_at < anio_end,
+        status_filter
+    ).count()
+
+    ingresos = db.session.query(func.coalesce(func.sum(Order.total), 0)).filter(
+        Order.created_at >= anio_start,
+        Order.created_at < anio_end,
+        status_filter
+    ).scalar()
+
+    envio_ingresos = db.session.query(func.coalesce(func.sum(Order.costo_envio), 0)).filter(
+        Order.created_at >= anio_start,
+        Order.created_at < anio_end,
+        Order.tipo_entrega == 'domicilio',
+        status_filter
+    ).scalar()
+
+    productos_vendidos = db.session.query(func.coalesce(func.sum(OrderItem.cantidad), 0)).join(Order).filter(
+        Order.created_at >= anio_start,
+        Order.created_at < anio_end,
+        status_filter
+    ).scalar()
+
+    clientes_nuevos = User.query.filter(
+        User.created_at >= anio_start,
+        User.created_at < anio_end,
+        User.is_admin == False
+    ).count()
+
+    top_productos = db.session.query(
+        Product.nombre,
+        func.sum(OrderItem.cantidad).label('total')
+    ).join(OrderItem).join(Order).filter(
+        Order.created_at >= anio_start,
+        Order.created_at < anio_end,
+        status_filter
+    ).group_by(Product.nombre).order_by(func.sum(OrderItem.cantidad).desc()).limit(10).all()
+
+    ranking_clientes = db.session.query(
+        User.nombre,
+        func.count(Order.id).label('pedidos'),
+        func.coalesce(func.sum(Order.total), 0).label('total_gastado')
+    ).join(Order).filter(
+        Order.created_at >= anio_start,
+        Order.created_at < anio_end,
+        status_filter
+    ).group_by(User.id, User.nombre).order_by(func.sum(Order.total).desc()).limit(10).all()
+
+    resumen_mensual = []
+    for m in range(1, 13):
+        m_start = datetime(anio, m, 1)
+        m_end = (m_start + timedelta(days=32)).replace(day=1)
+        m_ventas = Order.query.filter(Order.created_at >= m_start, Order.created_at < m_end, status_filter).count()
+        m_ingresos = db.session.query(func.coalesce(func.sum(Order.total), 0)).filter(
+            Order.created_at >= m_start, Order.created_at < m_end, status_filter
+        ).scalar()
+        m_clientes = User.query.filter(
+            User.created_at >= m_start, User.created_at < m_end, User.is_admin == False
+        ).count()
+        resumen_mensual.append({
+            'mes': mes_corto(m_start),
+            'ventas': m_ventas,
+            'ingresos': float(m_ingresos),
+            'clientes': m_clientes
+        })
+
+    anios_disponibles = []
+    earliest = db.session.query(func.min(Order.created_at)).scalar()
+    if earliest:
+        for y in range(earliest.year, today.year + 1):
+            anios_disponibles.append(y)
+
+    return render_template('admin/dashboard_anual.html',
+                           ventas=ventas, ingresos=float(ingresos),
+                           envio_ingresos=float(envio_ingresos),
+                           productos_vendidos=int(productos_vendidos),
+                           clientes_nuevos=clientes_nuevos,
+                           top_productos=top_productos,
+                           ranking_clientes=ranking_clientes,
+                           resumen_mensual=resumen_mensual,
+                           anio_seleccionado=str(anio),
+                           anios_disponibles=anios_disponibles)
 
 
 @admin_bp.route('/configuracion/envio', methods=['POST'])
@@ -217,6 +427,7 @@ def product_new():
         category_id = request.form.get('category_id', type=int)
         es_personalizable = 'es_personalizable' in request.form
         destacado = 'destacado' in request.form
+        visible_tienda = 'visible_tienda' in request.form
         tag_ids = request.form.getlist('tags', type=int)
 
         if not nombre or not precio:
@@ -229,7 +440,8 @@ def product_new():
             nombre=nombre, descripcion=descripcion, precio=Decimal(str(precio)),
             category_id=category_id if category_id else None,
             es_personalizable=es_personalizable,
-            destacado=destacado
+            destacado=destacado,
+            visible_tienda=visible_tienda
         )
 
         if tag_ids:
@@ -270,6 +482,7 @@ def product_edit(product_id):
         product.category_id = request.form.get('category_id', type=int) or None
         product.es_personalizable = 'es_personalizable' in request.form
         product.destacado = 'destacado' in request.form
+        product.visible_tienda = 'visible_tienda' in request.form
         product.activo = 'activo' in request.form
         product.stock_disponible = 'stock_disponible' in request.form
 

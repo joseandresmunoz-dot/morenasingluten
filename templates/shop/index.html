@@ -203,7 +203,7 @@
                             <span class="badge" style="background-color: {{ tag.color }};">{{ tag.nombre }}</span>
                             {% endfor %}
                             {% if current_user.is_authenticated %}
-                            <p class="precio mt-2 mb-2">${{ "%.2f"|format(product.precio) }}</p>
+                            <p class="precio mt-2 mb-2">${{ product.precio|numero }}</p>
                             <a href="{{ url_for('shop.product_detail', product_id=product.id) }}" class="btn btn-sm btn-morena w-100">
                                 {% if product.es_personalizable %}
                                     <i class="bi bi-sliders"></i> Personalizar
@@ -279,7 +279,7 @@
                             <span class="badge" style="background-color: {{ tag.color }};">{{ tag.nombre }}</span>
                             {% endfor %}
                             {% if current_user.is_authenticated %}
-                            <p class="precio mt-2 mb-2">${{ "%.2f"|format(product.precio) }}</p>
+                            <p class="precio mt-2 mb-2">${{ product.precio|numero }}</p>
                             <a href="{{ url_for('shop.product_detail', product_id=product.id) }}" class="btn btn-sm btn-morena w-100">
                                 {% if product.es_personalizable %}
                                     <i class="bi bi-sliders"></i> Personalizar
@@ -409,7 +409,7 @@
                             '<div class="result-name">' + escHtml(p.nombre) + '</div>' +
                             '<div class="result-tags">' + tagsHtml + '</div>' +
                             '</div>' +
-                            '<div class="result-price">$' + p.precio.toFixed(2) + '</div>';
+                            '<div class="result-price">$' + p.precio.toLocaleString('es-AR', { maximumFractionDigits: 0 }) + '</div>';
 
                         div.addEventListener('click', () => {
                             window.location.href = div.dataset.url;

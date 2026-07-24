@@ -30,7 +30,7 @@
                             {% if rule.descuento_tipo == 'porcentaje' %}
                             {{ rule.descuento_valor }}%
                             {% else %}
-                            ${{ "%.2f"|format(rule.descuento_valor) }}
+                            ${{ rule.descuento_valor|numero }}
                             {% endif %}
                         </td>
                         <td data-label="Estado"><span class="badge bg-{{ 'success' if rule.activo else 'danger' }}">{{ 'Activa' if rule.activo else 'Inactiva' }}</span></td>

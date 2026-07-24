@@ -29,7 +29,7 @@
                             {% if coupon.tipo == 'porcentaje' %}
                             <span class="badge bg-info">{{ coupon.valor }}%</span>
                             {% elif coupon.tipo == 'monto_fijo' %}
-                            <span class="badge bg-success">${{ "%.0f"|format(coupon.valor) }}</span>
+                            <span class="badge bg-success">${{ coupon.valor|numero }}</span>
                             {% else %}
                             <span class="badge bg-warning">Envío gratis</span>
                             {% endif %}

@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css', v='20260706-1') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css', v='20260725-1') }}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -20,9 +20,20 @@
             </div>
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">
-                        <i class="bi bi-speedometer2"></i> Dashboard
+                    <a class="nav-link" href="#" data-bs-toggle="collapse" data-bs-target="#dashboardMenu" aria-expanded="{% if request.endpoint in ['admin.dashboard', 'admin.dashboard_mensual', 'admin.dashboard_anual'] %}true{% else %}false{% endif %}">
+                        <i class="bi bi-speedometer2"></i> Dashboard <i class="bi bi-chevron-down float-end mt-1" style="font-size: 0.7rem;"></i>
                     </a>
+                    <div class="collapse {% if request.endpoint in ['admin.dashboard', 'admin.dashboard_mensual', 'admin.dashboard_anual'] %}show{% endif %}" id="dashboardMenu">
+                        <a class="nav-link ps-4 {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">
+                            <i class="bi bi-calendar-month"></i> Mes actual
+                        </a>
+                        <a class="nav-link ps-4 {% if request.endpoint == 'admin.dashboard_mensual' %}active{% endif %}" href="{{ url_for('admin.dashboard_mensual') }}">
+                            <i class="bi bi-graph-up"></i> Mensual
+                        </a>
+                        <a class="nav-link ps-4 {% if request.endpoint == 'admin.dashboard_anual' %}active{% endif %}" href="{{ url_for('admin.dashboard_anual') }}">
+                            <i class="bi bi-bar-chart-line"></i> Anual
+                        </a>
+                    </div>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if 'product' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.products') }}">

@@ -46,10 +46,10 @@
                             </a>
                             {% endif %}
                         </td>
-                        <td data-label="Total">${{ "%.2f"|format(order.total) }}</td>
-                        <td data-label="Envío">${{ "%.2f"|format(order.costo_envio or 0) }}</td>
+                        <td data-label="Total">${{ order.total|numero }}</td>
+                        <td data-label="Envío">${{ (order.costo_envio or 0)|numero }}</td>
                         <td data-label="Entrega">{{ (order.tipo_entrega or 'retiro')|replace('_',' ')|title }}</td>
-                        <td data-label="Seña">${{ "%.2f"|format(order.senia) }}</td>
+                        <td data-label="Seña">${{ order.senia|numero }}</td>
                         <td data-label="Estado">
                             {% set colors = {'pendiente':'warning','senia_pagada':'info','confirmado':'primary','en_preparacion':'secondary','listo':'success','entregado':'success','cancelado':'danger'} %}
                             <span class="badge bg-{{ colors.get(order.status,'secondary') }}">{{ order.status|replace('_',' ')|title }}</span>

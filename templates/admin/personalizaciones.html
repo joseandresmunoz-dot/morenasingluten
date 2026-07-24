@@ -59,7 +59,7 @@
                     <span>
                         {{ opt.nombre }}
                         {% if opt.precio_extra > 0 %}
-                        <span class="text-rosa">(+${{ "%.2f"|format(opt.precio_extra) }})</span>
+                        <span class="text-rosa">(+${{ opt.precio_extra|numero }})</span>
                         {% endif %}
                     </span>
                     <form method="POST" action="{{ url_for('admin.delete_customization_option', option_id=opt.id) }}">

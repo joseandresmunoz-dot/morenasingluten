@@ -110,6 +110,13 @@
                         <label class="form-check-label" for="destacado">Mostrar en productos destacados de inicio</label>
                     </div>
 
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="visible_tienda" id="visible_tienda"
+                            {% if not product or product.visible_tienda %}checked{% endif %}>
+                        <label class="form-check-label" for="visible_tienda">Visible en la tienda online</label>
+                        <br><small class="text-muted">Si está desactivado, solo se verá en pedidos manuales del admin</small>
+                    </div>
+
                     {% if product %}
                     <div class="form-check mt-2">
                         <input class="form-check-input" type="checkbox" name="activo" id="activo" {% if product.activo %}checked{% endif %}>

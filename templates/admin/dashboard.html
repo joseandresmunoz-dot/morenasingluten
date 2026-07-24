@@ -1,7 +1,7 @@
 {% extends "admin/base_admin.html" %}
 {% block title %}Dashboard - Admin{% endblock %}
 {% block content %}
-<h3 class="mb-4">Dashboard</h3>
+<h3 class="mb-4">Dashboard - {{ mes_actual }}</h3>
 
 <div class="row g-3 mb-4">
     <div class="col-md-3">
@@ -9,8 +9,8 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="text-white-50">Total Ventas</h6>
-                        <h3>{{ total_ventas }}</h3>
+                        <h6 class="text-white-50">Pedidos este mes</h6>
+                        <h3>{{ ventas_mes }}</h3>
                     </div>
                     <i class="bi bi-bag-check" style="font-size: 2rem; opacity: 0.5;"></i>
                 </div>
@@ -22,8 +22,8 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="text-white-50">Total Ingresos</h6>
-                        <h3>${{ "%.2f"|format(total_ingresos) }}</h3>
+                        <h6 class="text-white-50">Ingresos este mes</h6>
+                        <h3>${{ ingresos_mes|numero }}</h3>
                     </div>
                     <i class="bi bi-cash-stack" style="font-size: 2rem; opacity: 0.5;"></i>
                 </div>
@@ -35,8 +35,8 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="text-white-50">Productos Vendidos</h6>
-                        <h3>{{ productos_vendidos }}</h3>
+                        <h6 class="text-white-50">Productos vendidos</h6>
+                        <h3>{{ productos_vendidos_mes }}</h3>
                     </div>
                     <i class="bi bi-box-seam" style="font-size: 2rem; opacity: 0.5;"></i>
                 </div>
@@ -48,8 +48,8 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="text-dark opacity-50">Clientes</h6>
-                        <h3>{{ clientes_total }}</h3>
+                        <h6 class="text-dark opacity-50">Clientes nuevos</h6>
+                        <h3>{{ clientes_nuevos_mes }}</h3>
                     </div>
                     <i class="bi bi-people" style="font-size: 2rem; opacity: 0.5;"></i>
                 </div>
@@ -59,31 +59,15 @@
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body text-center">
-                <h6 class="text-muted">Ventas este mes</h6>
-                <h4>{{ ventas_mes }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body text-center">
-                <h6 class="text-muted">Ingresos este mes</h6>
-                <h4>${{ "%.2f"|format(ingresos_mes) }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="card">
             <div class="card-body text-center">
                 <h6 class="text-muted">Ingresos envíos (mes)</h6>
-                <h4>${{ "%.2f"|format(ingresos_envio_mes) }}</h4>
+                <h4>${{ ingresos_envio_mes|numero }}</h4>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="card">
             <div class="card-body">
                 <h6 class="text-muted mb-2">Costo envío domicilio</h6>
@@ -91,10 +75,18 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">$</span>
-                        <input type="number" name="envio_domicilio_costo" class="form-control" min="0" step="0.01" value="{{ '%.2f'|format(envio_domicilio_costo) }}" required>
+                        <input type="number" name="envio_domicilio_costo" class="form-control" min="0" step="0.01" value="{{ envio_domicilio_costo|numero }}" required>
                         <button class="btn btn-morena" type="submit">Guardar</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <a href="{{ url_for('admin.dashboard_mensual') }}" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-calendar-month"></i> Ver mes a mes</a>
+                <a href="{{ url_for('admin.dashboard_anual') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar-year"></i> Ver anual</a>
             </div>
         </div>
     </div>
@@ -125,7 +117,7 @@
                             <tr>
                                 <td data-label="Código"><a href="{{ url_for('admin.order_detail', order_id=order.id) }}">{{ order.codigo }}</a></td>
                                 <td data-label="Cliente">{{ order.user.nombre }}</td>
-                                <td data-label="Total">${{ "%.2f"|format(order.total) }}</td>
+                                <td data-label="Total">${{ order.total|numero }}</td>
                                 <td data-label="Estado">
                                     <select class="form-select form-select-sm status-select" data-order-id="{{ order.id }}" style="width: auto; min-width: 140px;">
                                         <option value="pendiente" {{ 'selected' if order.status == 'pendiente' else '' }}>Pendiente</option>
@@ -151,7 +143,7 @@
     <div class="col-lg-4">
         <div class="card">
             <div class="card-header">
-                <h6 class="mb-0">Top Productos</h6>
+                <h6 class="mb-0">Top Productos (mes)</h6>
             </div>
             <div class="card-body">
                 {% for nombre, total in top_productos %}
@@ -172,24 +164,16 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Manejar cambios en los selectores de estado
     document.querySelectorAll('.status-select').forEach(function(select) {
         select.addEventListener('change', function() {
             const orderId = this.getAttribute('data-order-id');
             const newStatus = this.value;
-
-            console.log('Cambio detectado:', orderId, newStatus); // Debug
-
-            // Deshabilitar el select durante la petición
             this.disabled = true;
             const originalValue = this.value;
-
-            // Usar XMLHttpRequest para mejor compatibilidad con sesiones Flask
             const xhr = new XMLHttpRequest();
             xhr.open('POST', `/admin/pedidos/${orderId}/status`, true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4) {
                     try {
@@ -198,16 +182,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (data.success) {
                                 showToast(data.message, 'success');
                             } else {
-                                // Revertir el cambio
                                 select.value = originalValue;
                                 showToast(data.message || 'Error al actualizar el estado', 'danger');
                             }
                         } else if (xhr.status === 302) {
-                            // Redirección, probablemente sesión expirada
                             select.value = originalValue;
                             showToast('Sesión expirada. Recarga la página e inicia sesión nuevamente.', 'danger');
                         } else {
-                            // Error HTTP
                             select.value = originalValue;
                             showToast('Error del servidor: ' + xhr.status, 'danger');
                         }
@@ -216,27 +197,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         select.value = originalValue;
                         showToast('Error al procesar la respuesta del servidor', 'danger');
                     } finally {
-                        // Re-habilitar el select
                         select.disabled = false;
                     }
                 }
             };
-
             xhr.onerror = function() {
-                console.error('Network error');
                 select.value = originalValue;
                 select.disabled = false;
                 showToast('Error de conexión', 'danger');
             };
-
-            // Enviar la petición
             xhr.send(`status=${encodeURIComponent(newStatus)}&ajax=1`);
         });
     });
 });
 
 function showToast(message, type) {
-    // Crear toast de Bootstrap
     const toastContainer = document.createElement('div');
     toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
     toastContainer.innerHTML = `
@@ -248,11 +223,8 @@ function showToast(message, type) {
         </div>
     `;
     document.body.appendChild(toastContainer);
-
     const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
     toast.show();
-
-    // Remover el toast después de que se oculte
     toastContainer.addEventListener('hidden.bs.toast', function() {
         document.body.removeChild(toastContainer);
     });

@@ -16,7 +16,7 @@ shop_bp = Blueprint('shop', __name__)
 @shop_bp.route('/')
 def index():
     categories = Category.query.filter_by(activo=True).order_by(Category.orden).all()
-    featured = Product.query.filter_by(activo=True, stock_disponible=True, destacado=True).limit(8).all()
+    featured = Product.query.filter_by(activo=True, visible_tienda=True, stock_disponible=True, destacado=True).limit(8).all()
 
     best_sellers = db.session.query(
         Product,
@@ -45,6 +45,7 @@ def api_buscar_productos():
 
     products = Product.query.filter(
         Product.activo == True,
+        Product.visible_tienda == True,
         Product.stock_disponible == True,
         db.or_(
             Product.nombre.ilike(f'%{q}%'),
@@ -73,7 +74,7 @@ def products():
     tag_id = request.args.get('etiqueta', type=int)
     buscar = request.args.get('buscar', '').strip()
 
-    query = Product.query.filter_by(activo=True, stock_disponible=True)
+    query = Product.query.filter_by(activo=True, visible_tienda=True, stock_disponible=True)
 
     if category_id:
         query = query.filter_by(category_id=category_id)
