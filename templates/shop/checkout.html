@@ -198,7 +198,7 @@
                         <hr>
                         <p class="mb-1"><strong>Para confirmar tu pedido debés abonar la seña (50%):</strong></p>
                         <p class="fs-4 fw-bold text-center my-3 text-rosa" id="checkout-senia" data-value="{{ senia|numero }}">${{ senia|numero }}</p>
-                        <p class="mb-1">El restante <strong id="checkout-restante">${{ total - senia|numero }}</strong> lo abonás al momento de retirar.</p>
+                        <p class="mb-1">El restante <strong id="checkout-restante">${{ (total - senia)|numero }}</strong> lo abonás al momento de retirar.</p>
                         <hr>
                         <div class="text-center">
                             <p class="mb-1"><strong>Datos para transferencia:</strong></p>

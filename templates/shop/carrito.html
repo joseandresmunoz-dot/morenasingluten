@@ -132,7 +132,7 @@
                     <hr>
                     <div class="d-flex justify-content-between fw-bold mb-3">
                         <span>Total estimado</span>
-                        <span id="cart-total" class="precio" data-discount="{{ descuento_reglas|numero }}">${{ subtotal - descuento_reglas|numero }}</span>
+                        <span id="cart-total" class="precio" data-discount="{{ descuento_reglas|numero }}">${{ (subtotal - descuento_reglas)|numero }}</span>
                     </div>
 
                     <!-- Recordatorio seña -->
@@ -140,7 +140,7 @@
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         <strong>Recordá:</strong> Para confirmar tu pedido debés abonar el <strong>50% como seña</strong>. El otro 50% lo abonás al retirar.
                         <hr class="my-2">
-                        <strong>Seña estimada: ${{ (subtotal - descuento_reglas|numero / 2) }}</strong><br>
+                        <strong>Seña estimada: ${{ ((subtotal - descuento_reglas) / 2)|numero }}</strong><br>
                         <small>Alias Mercado Pago: <strong>lacocinaceliaco</strong></small><br>
                         <small>Titular: Ana Carolina Iannovelli</small>
                     </div>
