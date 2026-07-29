@@ -196,16 +196,6 @@ def create_app():
         cart = session.get('cart', [])
         return {'cart_count': len(cart)}
 
-    # Template filter para formatear números: separador de miles con punto, sin decimales
-    @app.template_filter('numero')
-    def formato_numero(value):
-        try:
-            if value is None:
-                return '0'
-            return f'{int(round(float(value))):,}'.replace(',', '.')
-        except Exception:
-            return '0'
-
     return app
 
 
