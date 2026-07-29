@@ -176,16 +176,16 @@
             const row = input.closest('.card-body');
             const subtotalCell = row && row.querySelector('.cart-item-subtotal');
             if (subtotalCell) {
-                subtotalCell.textContent = '$' + formatMoney(price * quantity);
+                subtotalCell.textContent = formatMoney(price * quantity);
             }
         });
         if (cartSubtotalEl) {
-            cartSubtotalEl.textContent = '$' + formatMoney(subtotal);
+            cartSubtotalEl.textContent = formatMoney(subtotal);
             cartSubtotalEl.dataset.value = subtotal.toLocaleString('es-AR', { maximumFractionDigits: 0 });
         }
         if (cartTotalEl) {
             const discount = parseNumber(cartTotalEl.dataset.discount || 0);
-            cartTotalEl.textContent = '$' + formatMoney(Math.max(subtotal - discount, 0));
+            cartTotalEl.textContent = formatMoney(Math.max(subtotal - discount, 0));
         }
     };
 

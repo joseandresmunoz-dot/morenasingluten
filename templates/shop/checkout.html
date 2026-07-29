@@ -273,12 +273,12 @@
             const row = input.closest('tr');
             const subtotalCell = row && row.querySelector('.checkout-item-subtotal');
             if (subtotalCell) {
-                subtotalCell.textContent = '$' + formatMoney(rowSubtotal);
+                subtotalCell.textContent = formatMoney(rowSubtotal);
             }
         });
 
         if (subtotalEl) {
-            subtotalEl.textContent = '$' + formatMoney(subtotal);
+            subtotalEl.textContent = formatMoney(subtotal);
             subtotalEl.dataset.value = subtotal.toLocaleString('es-AR', { maximumFractionDigits: 0 });
         }
 
@@ -287,16 +287,16 @@
         const total = Math.max(subtotal - discount + shipping, 0);
 
         if (totalEl) {
-            totalEl.textContent = '$' + formatMoney(total);
+            totalEl.textContent = formatMoney(total);
             totalEl.dataset.value = total.toLocaleString('es-AR', { maximumFractionDigits: 0 });
         }
         if (seniaEl) {
             const senia = total / 2;
-            seniaEl.textContent = '$' + formatMoney(senia);
+            seniaEl.textContent = formatMoney(senia);
             seniaEl.dataset.value = senia.toLocaleString('es-AR', { maximumFractionDigits: 0 });
         }
         if (restanteEl) {
-            restanteEl.textContent = '$' + formatMoney(total / 2);
+            restanteEl.textContent = formatMoney(total / 2);
         }
     };
 
