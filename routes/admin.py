@@ -234,7 +234,7 @@ def dashboard_mensual():
     meses = []
     earliest = db.session.query(func.min(Order.created_at)).scalar()
     if earliest:
-        start = earliest.replace(day=1)
+        start = earliest.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         current = start
         while current <= datetime.utcnow():
             meses.append((current.strftime('%Y-%m'), mes_anio(current)))
