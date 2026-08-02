@@ -406,6 +406,20 @@ class AdminEmail(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class PushSubscription(db.Model):
+    """Suscripciones de Web Push (notificaciones PWA) para admins"""
+    __tablename__ = 'push_subscriptions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    endpoint = db.Column(db.String(600), unique=True, nullable=False)
+    p256dh = db.Column(db.String(200), nullable=False)
+    auth = db.Column(db.String(200), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='push_subscriptions')
+
+
 class CalendarEvent(db.Model):
     """Eventos del calendario del admin"""
     __tablename__ = 'calendar_events'

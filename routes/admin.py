@@ -7,7 +7,8 @@ from PIL import Image, ImageOps
 from extensions import db, csrf
 from models import (Product, ProductImage, Category, Tag, Order, OrderItem, Coupon, UserCoupon,
                     DiscountRule, PrizeWheel, PrizeWheelSegment, PrizeSpin, CalendarEvent,
-                    CustomizationGroup, CustomizationOption, User, StoreConfig, AdminEmail)
+                    CustomizationGroup, CustomizationOption, User, StoreConfig, AdminEmail,
+                    PushSubscription)
 from sqlalchemy import func
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -44,6 +45,47 @@ def admin_required(f):
             return redirect(url_for('shop.index'))
         return f(*args, **kwargs)
     return decorated_function
+
+
+@admin_bp.route('/vapid-public-key')
+@admin_required
+def vapid_public_key():
+    return jsonify({'public_key': current_app.config.get('VAPID_PUBLIC_KEY', '')})
+
+
+@admin_bp.route('/push/subscribe', methods=['POST'])
+@admin_required
+def push_subscribe():
+    data = request.get_json(silent=True) or {}
+    endpoint = (data.get('endpoint') or '').strip()
+    keys = data.get('keys') or {}
+    p256dh = (keys.get('p256dh') or '').strip()
+    auth = (keys.get('auth') or '').strip()
+
+    if not (endpoint and p256dh and auth):
+        return jsonify({'ok': False, 'error': 'Suscripción inválida'}), 400
+
+    existing = PushSubscription.query.filter_by(endpoint=endpoint).first()
+    if existing:
+        existing.user_id = current_user.id
+        existing.p256dh = p256dh
+        existing.auth = auth
+    else:
+        sub = PushSubscription(user_id=current_user.id, endpoint=endpoint, p256dh=p256dh, auth=auth)
+        db.session.add(sub)
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@admin_bp.route('/push/unsubscribe', methods=['POST'])
+@admin_required
+def push_unsubscribe():
+    data = request.get_json(silent=True) or {}
+    endpoint = (data.get('endpoint') or '').strip()
+    if endpoint:
+        PushSubscription.query.filter_by(endpoint=endpoint).delete()
+        db.session.commit()
+    return jsonify({'ok': True})
 
 
 def allowed_file(filename):

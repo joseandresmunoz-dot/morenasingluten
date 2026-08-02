@@ -590,6 +590,16 @@ def checkout():
 
         db.session.commit()
 
+        try:
+            from push import send_push_to_admins
+            send_push_to_admins(
+                'Nuevo pedido recibido',
+                f'Pedido {order.codigo} · ${float(order.total):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.'),
+                {'url': url_for('admin.order_detail', order_id=order.id)}
+            )
+        except Exception:
+            pass
+
         session.pop('cart', None)
         session.pop('coupon_id', None)
         session.pop('coupon_code', None)

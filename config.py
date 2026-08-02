@@ -49,6 +49,11 @@ class Config:
     MERCADOPAGO_ALIAS = os.environ.get('MERCADOPAGO_ALIAS', 'lacocinaceliaco')
     MERCADOPAGO_TITULAR = os.environ.get('MERCADOPAGO_TITULAR', 'Ana Carolina Iannovelli')
 
+    # Push notifications (VAPID)
+    VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+    VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+    VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:admin@morenasingluten.com')
+
     # Verificación de email
     EMAIL_VERIFY_SALT = os.environ.get('EMAIL_VERIFY_SALT', 'email-verify-salt')
     EMAIL_VERIFY_MAX_AGE = int(os.environ.get('EMAIL_VERIFY_MAX_AGE', '86400'))
