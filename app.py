@@ -51,19 +51,29 @@ def create_app():
             "short_name": "Morena SG",
             "description": "Sabores artesanales sin gluten",
             "start_url": "/",
+            "scope": "/",
+            "id": "/",
             "display": "standalone",
             "background_color": "#ffffff",
             "theme_color": "#f17528",
             "icons": [
                 {
-                    "src": "/images/logo_frente.png",
+                    "src": "/images/icon-192.png",
                     "sizes": "192x192",
-                    "type": "image/png"
+                    "type": "image/png",
+                    "purpose": "any"
                 },
                 {
-                    "src": "/images/logo_frente.png",
+                    "src": "/images/icon-512.png",
                     "sizes": "512x512",
-                    "type": "image/png"
+                    "type": "image/png",
+                    "purpose": "any"
+                },
+                {
+                    "src": "/images/icon-maskable-512.png",
+                    "sizes": "512x512",
+                    "type": "image/png",
+                    "purpose": "maskable"
                 }
             ]
         }
