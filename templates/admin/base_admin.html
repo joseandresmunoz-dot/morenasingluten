@@ -250,7 +250,7 @@
                         alert('Permiso denegado. Activá las notificaciones desde la configuración del navegador.');
                         return;
                     }
-                    const res = await fetch('{{ url_for('admin.vapid_public_key') }}');
+                    const res = await fetch('{{ url_for('admin.vapid_public_key') }}?v=3');
                     const vapid = await res.json();
                     if (!vapid.public_key) {
                         alert('Las notificaciones push no están configuradas en el servidor.');
@@ -275,7 +275,11 @@
                     setPushState(true);
                 }
             } catch (err) {
-                alert('Error al activar las notificaciones: ' + err.message);
+                if (String(err && err.message).toLowerCase().includes('applicationserverkey')) {
+                    alert('Clave VAPID inválida recibida por el navegador. Limpiá los datos del sitio y volvé a intentar.');
+                } else {
+                    alert('Error al activar las notificaciones: ' + (err && err.message));
+                }
             }
         });
 
