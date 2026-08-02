@@ -231,6 +231,7 @@
                 alert('Tu navegador no soporta notificaciones push.');
                 return;
             }
+            let vapidKey = null;
             try {
                 const reg = await navigator.serviceWorker.register('/sw.js');
                 let sub = await reg.pushManager.getSubscription();
@@ -250,8 +251,9 @@
                         alert('Permiso denegado. Activá las notificaciones desde la configuración del navegador.');
                         return;
                     }
-                    const res = await fetch('{{ url_for('admin.vapid_public_key') }}?v=3');
+                    const res = await fetch('{{ url_for('admin.vapid_public_key') }}?v=4');
                     const vapid = await res.json();
+                    vapidKey = vapid.public_key || null;
                     if (!vapid.public_key) {
                         alert('Las notificaciones push no están configuradas en el servidor.');
                         return;
@@ -275,10 +277,15 @@
                     setPushState(true);
                 }
             } catch (err) {
-                if (String(err && err.message).toLowerCase().includes('applicationserverkey')) {
-                    alert('Clave VAPID inválida recibida por el navegador. Limpiá los datos del sitio y volvé a intentar.');
+                const msg = String(err && err.message || err).toLowerCase();
+                if (msg.includes('applicationserverkey')) {
+                    let info = 'Clave VAPID inválida.';
+                    if (vapidKey) {
+                        info += ' Recibida: ' + vapidKey.length + ' chars, decodificada: ' + urlBase64ToUint8Array(vapidKey).length + ' bytes.';
+                    }
+                    alert(info + ' Limpiá los datos del sitio y volvé a intentar.');
                 } else {
-                    alert('Error al activar las notificaciones: ' + (err && err.message));
+                    alert('Error al activar las notificaciones: ' + msg);
                 }
             }
         });

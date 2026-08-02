@@ -50,7 +50,21 @@ def admin_required(f):
 @admin_bp.route('/vapid-public-key')
 @admin_required
 def vapid_public_key():
-    return jsonify({'public_key': current_app.config.get('VAPID_PUBLIC_KEY', '')})
+    import base64
+    pk = current_app.config.get('VAPID_PUBLIC_KEY', '')
+    if pk:
+        try:
+            from cryptography.hazmat.primitives import serialization
+            from py_vapid import Vapid
+            v = Vapid.from_string(current_app.config.get('VAPID_PRIVATE_KEY'))
+            raw = v.public_key.public_bytes(
+                serialization.Encoding.X962,
+                serialization.PublicFormat.UncompressedPoint
+            )
+            pk = base64.urlsafe_b64encode(raw).rstrip(b'=').decode()
+        except Exception:
+            pass
+    return jsonify({'public_key': pk})
 
 
 @admin_bp.route('/push/subscribe', methods=['POST'])
