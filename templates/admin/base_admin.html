@@ -279,6 +279,11 @@
             navigator.serviceWorker.register('/sw.js');
             updatePushState();
         }
+
+        // Limpiar badge de pedidos al entrar a la lista
+        if (location.pathname.includes('/admin/pedidos') && navigator.clearAppBadge) {
+            navigator.clearAppBadge();
+        }
     </script>
 </body>
 </html>

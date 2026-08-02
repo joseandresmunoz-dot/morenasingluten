@@ -2,7 +2,11 @@ import json
 from flask import current_app
 from pywebpush import webpush, WebPushException
 from extensions import db
-from models import PushSubscription, User
+from models import PushSubscription, User, Order
+
+
+def _count_pending_orders():
+    return Order.query.filter(Order.status == 'pendiente').count()
 
 
 def send_push_to_admins(title, body, data=None):
@@ -12,13 +16,17 @@ def send_push_to_admins(title, body, data=None):
     Devuelve la cantidad de suscripciones encontradas (para diagnóstico).
     """
     if not current_app.config.get('VAPID_PRIVATE_KEY'):
+        current_app.logger.warning('Push: VAPID_PRIVATE_KEY no configurada')
         return 0
 
     subs = PushSubscription.query.join(User).filter(User.is_admin == True).all()  # noqa: E712
     if not subs:
+        current_app.logger.warning('Push: sin suscripciones de admins')
         return 0
 
-    payload = json.dumps({'title': title, 'body': body, 'data': data or {}})
+    payload_data = dict(data or {})
+    payload_data['badge'] = _count_pending_orders()
+    payload = json.dumps({'title': title, 'body': body, 'data': payload_data})
     sent = 0
 
     for sub in subs:
@@ -34,10 +42,11 @@ def send_push_to_admins(title, body, data=None):
             )
             sent += 1
         except WebPushException as e:
+            current_app.logger.error('Push WebPushException %s: %s', sub.endpoint, e)
             if e.response and e.response.status_code in (404, 410):
                 db.session.delete(sub)
                 db.session.commit()
-        except Exception:
-            pass
+        except Exception as e:
+            current_app.logger.error('Push error %s: %s', sub.endpoint, e)
 
     return sent

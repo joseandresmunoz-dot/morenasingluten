@@ -31,11 +31,15 @@ self.addEventListener('push', (e) => {
     const options = {
         body: payload.body || '',
         icon: origin + '/images/logo_frente.png',
-        badge: origin + '/images/logo_frente.png',
+        badge: origin + '/images/icon-192.png',
         data: payload.data || {},
         vibrate: [200, 100, 200]
     };
     e.waitUntil(self.registration.showNotification(title, options));
+    const badgeCount = payload.data && payload.data.badge;
+    if (badgeCount && 'setAppBadge' in self.registration) {
+        self.registration.setAppBadge(badgeCount);
+    }
 });
 
 self.addEventListener('notificationclick', (e) => {
