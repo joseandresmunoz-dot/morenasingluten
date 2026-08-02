@@ -231,47 +231,51 @@
                 alert('Tu navegador no soporta notificaciones push.');
                 return;
             }
-            const reg = await navigator.serviceWorker.register('/sw.js');
-            let sub = await reg.pushManager.getSubscription();
-            if (this.dataset.on === '1') {
-                if (sub) {
-                    await sub.unsubscribe();
-                    await fetch('{{ url_for('admin.push_unsubscribe') }}', {
+            try {
+                const reg = await navigator.serviceWorker.register('/sw.js');
+                let sub = await reg.pushManager.getSubscription();
+                if (this.dataset.on === '1') {
+                    if (sub) {
+                        await sub.unsubscribe();
+                        await fetch('{{ url_for('admin.push_unsubscribe') }}', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfTokenPush },
+                            body: JSON.stringify({ endpoint: sub.endpoint })
+                        }).catch(() => {});
+                    }
+                    setPushState(false);
+                } else {
+                    const perm = await Notification.requestPermission();
+                    if (perm !== 'granted') {
+                        alert('Permiso denegado. Activá las notificaciones desde la configuración del navegador.');
+                        return;
+                    }
+                    const res = await fetch('{{ url_for('admin.vapid_public_key') }}');
+                    const vapid = await res.json();
+                    if (!vapid.public_key) {
+                        alert('Las notificaciones push no están configuradas en el servidor.');
+                        return;
+                    }
+                    sub = await reg.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(vapid.public_key)
+                    });
+                    const saved = await fetch('{{ url_for('admin.push_subscribe') }}', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfTokenPush },
-                        body: JSON.stringify({ endpoint: sub.endpoint })
-                    }).catch(() => {});
+                        body: JSON.stringify({
+                            endpoint: sub.endpoint,
+                            keys: sub.toJSON().keys
+                        })
+                    });
+                    if (!saved.ok) {
+                        alert('No se pudo guardar la suscripción en el servidor.');
+                        return;
+                    }
+                    setPushState(true);
                 }
-                setPushState(false);
-            } else {
-                const perm = await Notification.requestPermission();
-                if (perm !== 'granted') {
-                    alert('Permiso denegado. Activá las notificaciones desde la configuración del navegador.');
-                    return;
-                }
-                const res = await fetch('{{ url_for('admin.vapid_public_key') }}');
-                const vapid = await res.json();
-                if (!vapid.public_key) {
-                    alert('Las notificaciones push no están configuradas en el servidor.');
-                    return;
-                }
-                sub = await reg.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(vapid.public_key)
-                });
-                const saved = await fetch('{{ url_for('admin.push_subscribe') }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfTokenPush },
-                    body: JSON.stringify({
-                        endpoint: sub.endpoint,
-                        keys: sub.toJSON().keys
-                    })
-                });
-                if (!saved.ok) {
-                    alert('No se pudo guardar la suscripción en el servidor.');
-                    return;
-                }
-                setPushState(true);
+            } catch (err) {
+                alert('Error al activar las notificaciones: ' + err.message);
             }
         });
 
