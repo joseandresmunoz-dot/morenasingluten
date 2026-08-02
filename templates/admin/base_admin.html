@@ -114,6 +114,9 @@
                     <button class="btn btn-sm btn-outline-secondary" id="pushToggle" title="Activar notificaciones de pedidos">
                         <i class="bi bi-bell"></i>
                     </button>
+                    <button class="btn btn-sm btn-outline-secondary d-none" id="pushTest" title="Enviar notificación de prueba">
+                        <i class="bi bi-bell-ring"></i>
+                    </button>
                     <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-secondary">Salir</a>
                 </div>
             </div>
@@ -175,6 +178,7 @@
         // Push notifications (pedidos nuevos)
         const pushToggle = document.getElementById('pushToggle');
         const pushIcon = pushToggle?.querySelector('i');
+        const pushTest = document.getElementById('pushTest');
         const csrfTokenPush = '{{ csrf_token() }}';
 
         function urlBase64ToUint8Array(base64String) {
@@ -192,7 +196,25 @@
             pushIcon.className = on ? 'bi bi-bell-fill text-success' : 'bi bi-bell';
             pushToggle.title = on ? 'Desactivar notificaciones de pedidos' : 'Activar notificaciones de pedidos';
             pushToggle.dataset.on = on ? '1' : '0';
+            pushTest?.classList.toggle('d-none', !on);
         }
+
+        pushTest?.addEventListener('click', async function() {
+            try {
+                const res = await fetch('{{ url_for('admin.push_test') }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfTokenPush }
+                });
+                const data = await res.json();
+                if (data.sent > 0) {
+                    alert('Notificación de prueba enviada. Revisá tu teléfono.');
+                } else {
+                    alert('No se encontraron suscripciones activas. Desactivá y volvé a activar la campana.');
+                }
+            } catch (_) {
+                alert('Error al enviar la notificación de prueba.');
+            }
+        });
 
         async function updatePushState() {
             if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
@@ -237,7 +259,7 @@
                     userVisibleOnly: true,
                     applicationServerKey: urlBase64ToUint8Array(vapid.public_key)
                 });
-                await fetch('{{ url_for('admin.push_subscribe') }}', {
+                const saved = await fetch('{{ url_for('admin.push_subscribe') }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfTokenPush },
                     body: JSON.stringify({
@@ -245,6 +267,10 @@
                         keys: sub.toJSON().keys
                     })
                 });
+                if (!saved.ok) {
+                    alert('No se pudo guardar la suscripción en el servidor.');
+                    return;
+                }
                 setPushState(true);
             }
         });

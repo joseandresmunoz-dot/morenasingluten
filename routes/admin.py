@@ -88,6 +88,14 @@ def push_unsubscribe():
     return jsonify({'ok': True})
 
 
+@admin_bp.route('/push/test', methods=['POST'])
+@admin_required
+def push_test():
+    from push import send_push_to_admins
+    sent = send_push_to_admins('Prueba Morena', '¡Las notificaciones funcionan!')
+    return jsonify({'ok': True, 'sent': sent})
+
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
