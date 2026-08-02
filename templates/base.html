@@ -150,7 +150,7 @@
     {% block extra_js %}{% endblock %}
     <script>
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('{{ url_for('static', filename='js/sw.js') }}');
+        navigator.serviceWorker.register('/sw.js');
     }
     </script>
 </body>

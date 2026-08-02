@@ -197,7 +197,7 @@
         async function updatePushState() {
             if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
             try {
-                const reg = await navigator.serviceWorker.getRegistration();
+                const reg = await navigator.serviceWorker.getRegistration('/sw.js');
                 const sub = reg ? await reg.pushManager.getSubscription() : null;
                 setPushState(sub !== null && Notification.permission === 'granted');
             } catch (_) {}
@@ -209,7 +209,7 @@
                 alert('Tu navegador no soporta notificaciones push.');
                 return;
             }
-            const reg = await navigator.serviceWorker.register('{{ url_for('static', filename='js/sw.js') }}');
+            const reg = await navigator.serviceWorker.register('/sw.js');
             let sub = await reg.pushManager.getSubscription();
             if (this.dataset.on === '1') {
                 if (sub) {
@@ -250,7 +250,7 @@
         });
 
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('{{ url_for('static', filename='js/sw.js') }}');
+            navigator.serviceWorker.register('/sw.js');
             updatePushState();
         }
     </script>

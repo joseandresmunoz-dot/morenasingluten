@@ -68,6 +68,10 @@ def create_app():
             ]
         }
 
+    @app.route('/sw.js')
+    def service_worker():
+        return send_from_directory(app.static_folder, 'js/sw.js', mimetype='application/javascript')
+
     @app.after_request
     def add_no_cache_headers(response):
         if request.endpoint == 'auth.login':
