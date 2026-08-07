@@ -56,7 +56,10 @@
                         </td>
                         <td data-label="Retiro">{{ order.fecha_retiro.strftime('%d/%m %H:%M') if order.fecha_retiro else '-' }}</td>
                         <td data-label="Fecha">{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                        <td data-label="Acción"><a href="{{ url_for('admin.order_detail', order_id=order.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
+                        <td data-label="Acción">
+                            <a href="{{ url_for('admin.order_edit', order_id=order.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                            <a href="{{ url_for('admin.order_detail', order_id=order.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

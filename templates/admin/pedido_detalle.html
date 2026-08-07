@@ -3,7 +3,10 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3>Pedido {{ order.codigo }}</h3>
-    <a href="{{ url_for('admin.orders') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('admin.order_edit', order_id=order.id) }}" class="btn btn-morena"><i class="bi bi-pencil"></i> Editar pedido</a>
+        <a href="{{ url_for('admin.orders') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+    </div>
 </div>
 
 <div class="row g-4">

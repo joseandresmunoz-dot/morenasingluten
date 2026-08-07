@@ -896,6 +896,89 @@ def order_new():
     return render_template('admin/pedido_form.html', users=users, products=products, config_tienda=config_tienda)
 
 
+@admin_bp.route('/pedidos/<int:order_id>/editar', methods=['GET', 'POST'])
+@admin_required
+def order_edit(order_id):
+    order = Order.query.get_or_404(order_id)
+    users = User.query.filter_by(is_admin=False).order_by(User.nombre).all()
+    config_tienda = StoreConfig.get_or_create()
+
+    products = Product.query.filter_by(activo=True).order_by(Product.nombre).all()
+    existing_ids = [item.product_id for item in order.items]
+    for pid in existing_ids:
+        if not any(p.id == pid for p in products):
+            p = db.session.get(Product, pid)
+            if p:
+                products.append(p)
+    products.sort(key=lambda p: p.nombre)
+
+    if request.method == 'POST':
+        user_id = request.form.get('user_id', type=int)
+        tipo_entrega = request.form.get('tipo_entrega', 'retiro')
+        direccion_entrega = request.form.get('direccion_entrega', '').strip() or None
+        notas = request.form.get('notas', '').strip()
+        costo_envio = request.form.get('costo_envio', type=float) or 0
+        status = request.form.get('status', 'confirmado')
+
+        if not user_id:
+            flash('Debés seleccionar un cliente.', 'danger')
+            return render_template('admin/pedido_form.html', order=order, users=users, products=products, config_tienda=config_tienda)
+
+        if tipo_entrega == 'domicilio' and not direccion_entrega:
+            flash('Debés ingresar una dirección de entrega para envío a domicilio.', 'danger')
+            return render_template('admin/pedido_form.html', order=order, users=users, products=products, config_tienda=config_tienda)
+
+        if tipo_entrega == 'retiro':
+            costo_envio = 0
+
+        product_ids = request.form.getlist('product_id', type=int)
+        cantidades = request.form.getlist('cantidad', type=int)
+        items_data = []
+
+        for product_id, cantidad in zip(product_ids, cantidades):
+            if product_id and cantidad and cantidad > 0:
+                product = db.session.get(Product, product_id)
+                if product:
+                    items_data.append((product, cantidad))
+
+        if not items_data:
+            flash('Debés agregar al menos un producto con cantidad mayor a cero.', 'danger')
+            return render_template('admin/pedido_form.html', order=order, users=users, products=products, config_tienda=config_tienda)
+
+        for item in list(order.items):
+            db.session.delete(item)
+
+        order.user_id = user_id
+        order.status = status
+        order.notas = notas
+        order.tipo_entrega = tipo_entrega
+        order.costo_envio = Decimal(str(costo_envio))
+        order.direccion_entrega = direccion_entrega
+
+        subtotal = Decimal('0')
+        for product, cantidad in items_data:
+            precio_unitario = Decimal(str(product.precio))
+            item_subtotal = precio_unitario * cantidad
+            subtotal += item_subtotal
+            order_item = OrderItem(
+                order_id=order.id,
+                product_id=product.id,
+                cantidad=cantidad,
+                precio_unitario=precio_unitario,
+                subtotal=item_subtotal
+            )
+            db.session.add(order_item)
+
+        order.subtotal = subtotal
+        order.total = subtotal + order.costo_envio
+        db.session.commit()
+
+        flash('Pedido actualizado.', 'success')
+        return redirect(url_for('admin.order_detail', order_id=order.id))
+
+    return render_template('admin/pedido_form.html', order=order, users=users, products=products, config_tienda=config_tienda)
+
+
 @admin_bp.route('/pedidos/<int:order_id>/status', methods=['POST'])
 @admin_required
 @csrf.exempt
