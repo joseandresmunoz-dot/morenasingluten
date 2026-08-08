@@ -22,12 +22,26 @@
                 </thead>
                 <tbody>
                     {% for rule in rules %}
+                    {% set cond = rule.condicion or {} %}
                     <tr>
                         <td data-label="Nombre">{{ rule.nombre }}</td>
                         <td data-label="Tipo"><span class="badge bg-info">{{ rule.tipo|replace('_',' ')|title }}</span></td>
-                        <td data-label="Condición"><small>{{ rule.condicion }}</small></td>
+                        <td data-label="Condición">
+                            {% if rule.tipo == 'por_cantidad' %}
+                                {% if cond.producto_id %}{% set p = products_by_id.get(cond.producto_id) %}<small><i class="bi bi-box"></i> {{ p.nombre if p else 'Producto' }} · </small>{% endif %}
+                                {% if cond.categoria_id %}{% set c = categories_by_id.get(cond.categoria_id) %}<small><i class="bi bi-tags"></i> {{ c.nombre if c else 'Categoría' }} · </small>{% endif %}
+                                {% if not cond.producto_id and not cond.categoria_id %}<small>Todos los productos · </small>{% endif %}
+                                <small class="text-muted">{% for t in (cond.tiers or []) %}{{ t.min }}u: {{ t.valor|int if t.valor == t.valor|int else t.valor }}{{ '%' if t.tipo == 'porcentaje' else ' $' }}{% if not loop.last %} · {% endif %}{% endfor %}</small>
+                            {% elif rule.tipo == 'por_dia' %}
+                                <small>Día: {{ (cond.dia_semana or '')|capitalize }}</small>
+                            {% else %}
+                                <small>{{ cond }}</small>
+                            {% endif %}
+                        </td>
                         <td data-label="Descuento">
-                            {% if rule.descuento_tipo == 'porcentaje' %}
+                            {% if rule.tipo == 'por_cantidad' and cond.tiers %}
+                            <span class="badge bg-rosa-light text-rosa">{{ cond.tiers|length }} escalón/es</span>
+                            {% elif rule.descuento_tipo == 'porcentaje' %}
                             {{ rule.descuento_valor }}%
                             {% else %}
                             ${{ rule.descuento_valor|numero }}

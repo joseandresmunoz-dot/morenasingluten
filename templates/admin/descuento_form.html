@@ -5,13 +5,13 @@
 
 <div class="card">
     <div class="card-body">
-        <form method="POST">
+        <form method="POST" novalidate>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">Nombre de la regla *</label>
-                    <input type="text" name="nombre" class="form-control" placeholder="Ej: 10% al comprar 6+ facturas" required>
+                    <input type="text" name="nombre" class="form-control" placeholder="Ej: Descuento empanadas por docena" required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Tipo de regla *</label>
@@ -23,34 +23,49 @@
             </div>
 
             <!-- Condiciones por cantidad -->
-            <div id="condCantidad" class="row g-3 mt-1">
-                <div class="col-md-4">
-                    <label class="form-label">Cantidad mínima</label>
-                    <input type="number" name="min_cantidad" class="form-control" value="1" min="1">
+            <div id="condCantidad" class="mt-3">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Producto específico</label>
+                        <select name="producto_id" class="form-select">
+                            <option value="">Todos</option>
+                            {% for p in products %}
+                            <option value="{{ p.id }}">{{ p.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Categoría específica</label>
+                        <select name="categoria_id" class="form-select">
+                            <option value="">Todas</option>
+                            {% for c in categories %}
+                            <option value="{{ c.id }}">{{ c.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">Producto específico</label>
-                    <select name="producto_id" class="form-select">
-                        <option value="">Todos</option>
-                        {% for p in products %}
-                        <option value="{{ p.id }}">{{ p.nombre }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Categoría específica</label>
-                    <select name="categoria_id" class="form-select">
-                        <option value="">Todas</option>
-                        {% for c in categories %}
-                        <option value="{{ c.id }}">{{ c.nombre }}</option>
-                        {% endfor %}
-                    </select>
+
+                <div class="mt-3">
+                    <label class="form-label">Escalones de descuento por cantidad</label>
+                    <div id="tiers-list">
+                        <div class="tier-row d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <input type="number" name="tiers_min" class="form-control form-control-sm" min="1" placeholder="unid. mín." style="width: 120px;">
+                            <select name="tiers_tipo" class="form-select form-select-sm" style="width: 90px;">
+                                <option value="porcentaje">%</option>
+                                <option value="monto_fijo">$</option>
+                            </select>
+                            <input type="number" name="tiers_valor" class="form-control form-control-sm" step="0.01" min="0" placeholder="valor" style="width: 120px;">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-tier" title="Quitar escalón"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                    </div>
+                    <button type="button" id="add-tier" class="btn btn-sm btn-outline-secondary"><i class="bi bi-plus-lg"></i> Agregar escalón</button>
+                    <div class="form-text">Ej: "2 unid = 5%" y "4 unid = 10%". Se aplica el mayor escalón que alcances con la cantidad comprada (no se acumulan).</div>
                 </div>
             </div>
 
             <!-- Condiciones por día -->
-            <div id="condDia" class="row g-3 mt-1 d-none">
-                <div class="col-md-6">
+            <div id="condDia" class="row g-3 mt-3 d-none">
+                <div class="col-md-4">
                     <label class="form-label">Día de la semana</label>
                     <select name="dia_semana" class="form-select">
                         <option value="lunes">Lunes</option>
@@ -62,17 +77,14 @@
                         <option value="domingo">Domingo</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="row g-3 mt-2">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Tipo de descuento</label>
                     <select name="descuento_tipo" class="form-select">
                         <option value="porcentaje">Porcentaje (%)</option>
                         <option value="monto_fijo">Monto fijo ($)</option>
                     </select>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Valor del descuento</label>
                     <input type="number" name="descuento_valor" class="form-control" step="0.01" min="0" required>
                 </div>
@@ -87,9 +99,54 @@
 </div>
 
 <script>
-document.getElementById('tipoRegla').addEventListener('change', function() {
+const tipoRegla = document.getElementById('tipoRegla');
+tipoRegla.addEventListener('change', function() {
     document.getElementById('condCantidad').classList.toggle('d-none', this.value !== 'por_cantidad');
     document.getElementById('condDia').classList.toggle('d-none', this.value !== 'por_dia');
+});
+
+document.getElementById('add-tier').addEventListener('click', function() {
+    const first = document.querySelector('.tier-row');
+    const clone = first.cloneNode(true);
+    clone.querySelectorAll('input').forEach(i => i.value = '');
+    first.parentNode.appendChild(clone);
+});
+
+document.getElementById('tiers-list').addEventListener('click', function(e) {
+    if (e.target.closest('.remove-tier')) {
+        if (document.querySelectorAll('.tier-row').length > 1) {
+            e.target.closest('.tier-row').remove();
+        }
+    }
+});
+
+const ruleForm = document.querySelector('form');
+ruleForm.addEventListener('submit', function(e) {
+    const nombre = ruleForm.querySelector('[name="nombre"]').value.trim();
+    if (!nombre) {
+        e.preventDefault();
+        alert('Ingresá el nombre de la regla.');
+        return;
+    }
+    if (tipoRegla.value === 'por_cantidad') {
+        let ok = false;
+        document.querySelectorAll('.tier-row').forEach(row => {
+            const min = Number(row.querySelector('[name="tiers_min"]').value);
+            const val = Number(row.querySelector('[name="tiers_valor"]').value);
+            if (min > 0 && val >= 0 && row.querySelector('[name="tiers_valor"]').value !== '') ok = true;
+        });
+        if (!ok) {
+            e.preventDefault();
+            alert('Definí al menos un escalón completo (unidades mínimas + valor de descuento).');
+        }
+    } else {
+        const dia = ruleForm.querySelector('[name="dia_semana"]').value;
+        const valor = ruleForm.querySelector('[name="descuento_valor"]').value;
+        if (!dia || valor === '') {
+            e.preventDefault();
+            alert('Completá el día de la semana y el valor del descuento.');
+        }
+    }
 });
 </script>
 {% endblock %}

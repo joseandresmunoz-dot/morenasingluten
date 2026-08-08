@@ -425,9 +425,31 @@
                     dropdown.appendChild(viewAll);
                 }
                 dropdown.classList.add('show');
+                positionDropdown();
             })
             .catch(() => {});
     };
+
+    function positionDropdown() {
+        const form = document.querySelector('.hero-search-form');
+        if (!form) return;
+        const rect = form.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.left = rect.left + 'px';
+        dropdown.style.width = rect.width + 'px';
+        dropdown.style.top = (rect.bottom + 2) + 'px';
+        const h = dropdown.offsetHeight;
+        if (rect.bottom + 2 + h > window.innerHeight && rect.top - h - 2 > 0) {
+            dropdown.style.top = (rect.top - h - 2) + 'px';
+        }
+    }
+
+    window.addEventListener('scroll', () => {
+        if (dropdown.classList.contains('show')) positionDropdown();
+    }, true);
+    window.addEventListener('resize', () => {
+        if (dropdown.classList.contains('show')) positionDropdown();
+    });
 
     const escHtml = (s) => {
         const d = document.createElement('div');

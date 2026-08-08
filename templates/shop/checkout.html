@@ -175,14 +175,14 @@
                     {% if costo_envio > 0 %}
                     <div class="d-flex justify-content-between mb-2">
                         <span>Envío a domicilio</span>
-                        <span id="checkout-shipping" data-value="{{ costo_envio }}">${{ costo_envio|numero }}</span>
+                        <span id="checkout-shipping" data-value="{{ costo_envio|numero }}">${{ costo_envio|numero }}</span>
                     </div>
                     {% endif %}
 
                     {% if descuento_total > 0 %}
                     <div class="d-flex justify-content-between mb-2 text-success fw-bold">
                         <span>Descuento total</span>
-                        <span id="checkout-discount-total" data-value="{{ descuento_total }}">-${{ descuento_total|numero }}</span>
+                        <span id="checkout-discount-total" data-value="{{ descuento_total|numero }}">-${{ descuento_total|numero }}</span>
                     </div>
                     {% endif %}
 

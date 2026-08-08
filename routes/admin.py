@@ -1197,7 +1197,10 @@ def coupon_delete(coupon_id):
 @admin_required
 def discount_rules():
     rules = DiscountRule.query.all()
-    return render_template('admin/descuentos.html', rules=rules)
+    products_by_id = {p.id: p for p in Product.query.all()}
+    categories_by_id = {c.id: c for c in Category.query.all()}
+    return render_template('admin/descuentos.html', rules=rules,
+                           products_by_id=products_by_id, categories_by_id=categories_by_id)
 
 
 @admin_bp.route('/descuentos/nuevo', methods=['GET', 'POST'])
@@ -1211,13 +1214,30 @@ def discount_rule_new():
 
         condicion = {}
         if tipo == 'por_cantidad':
-            condicion['min_cantidad'] = request.form.get('min_cantidad', 1, type=int)
             prod_id = request.form.get('producto_id', type=int)
             cat_id = request.form.get('categoria_id', type=int)
             if prod_id:
                 condicion['producto_id'] = prod_id
             if cat_id:
                 condicion['categoria_id'] = cat_id
+
+            mins = request.form.getlist('tiers_min', type=int)
+            tipos = request.form.getlist('tiers_tipo')
+            valores = request.form.getlist('tiers_valor', type=float)
+            tiers = []
+            for m, t, v in zip(mins, tipos, valores):
+                if m and m > 0 and t and v is not None and v >= 0:
+                    tiers.append({'min': int(m), 'tipo': t, 'valor': float(v)})
+
+            if not tiers:
+                flash('Debés definir al menos un escalón de cantidad (unidades mínimas + descuento).', 'danger')
+                return redirect(url_for('admin.discount_rule_new'))
+
+            tiers.sort(key=lambda x: x['min'])
+            condicion['tiers'] = tiers
+            descuento_tipo = tiers[0]['tipo']
+            descuento_valor = tiers[0]['valor']
+
         elif tipo == 'por_dia':
             condicion['dia_semana'] = request.form.get('dia_semana', '')
 

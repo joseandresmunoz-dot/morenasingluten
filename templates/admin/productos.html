@@ -4,6 +4,10 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <h3 class="mb-0">Productos</h3>
     <div class="d-flex gap-2">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="search" id="product-search" class="form-control" placeholder="Buscar por nombre o categoría..." autocomplete="off">
+        </div>
         <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#bulkPriceModal">
             <i class="bi bi-currency-dollar"></i> Actualizar Precios
         </button>
@@ -87,6 +91,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            <div class="p-3 text-center text-muted d-none" id="product-empty">No se encontraron productos.</div>
         </div>
     </div>
 </div>
@@ -148,6 +153,23 @@
 <script>
 document.getElementById('bulkTipo')?.addEventListener('change', function() {
     document.getElementById('bulkSimbolo').textContent = this.value === 'porcentaje' ? '%' : '$';
+});
+
+const productSearch = document.getElementById('product-search');
+const productRows = Array.from(document.querySelectorAll('table tbody tr'));
+const productEmpty = document.getElementById('product-empty');
+
+productSearch.addEventListener('input', () => {
+    const q = productSearch.value.trim().toLowerCase();
+    let visible = 0;
+    productRows.forEach(row => {
+        const nombre = (row.querySelector('[data-label="Nombre"]')?.textContent || '').toLowerCase();
+        const categoria = (row.querySelector('[data-label="Categoría"]')?.textContent || '').toLowerCase();
+        const match = !q || nombre.includes(q) || categoria.includes(q);
+        row.classList.toggle('d-none', !match);
+        if (match) visible += 1;
+    });
+    productEmpty.classList.toggle('d-none', visible > 0);
 });
 </script>
 {% endblock %}

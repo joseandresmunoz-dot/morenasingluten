@@ -64,11 +64,14 @@
 
             {% if not coupon %}
             <div class="mt-3">
-                <label class="form-label">Asignar a clientes específicos (emails separados por coma)</label>
-                <textarea name="user_emails" class="form-control" rows="2" placeholder="Dejá vacío para que cualquiera pueda usarlo"></textarea>
-                <small class="text-muted">Clientes registrados:
-                    {% for u in users %}{{ u.email }}{% if not loop.last %}, {% endif %}{% endfor %}
-                </small>
+                <label class="form-label">Asignar a clientes específicos</label>
+                <div class="coupon-client-picker">
+                    <div id="coupon-chips" class="d-flex flex-wrap gap-1 mb-2"></div>
+                    <input type="text" id="coupon-client-search" class="form-control" placeholder="Buscar cliente por nombre o email..." autocomplete="off">
+                    <div id="coupon-client-dropdown" class="list-group d-none" style="max-height: 220px; overflow-y: auto; position: absolute; z-index: 1050; width: auto; min-width: 100%;"></div>
+                    <input type="hidden" name="user_emails" id="coupon-user-emails" value="">
+                    <small class="text-muted">Dejá vacío para que cualquiera pueda usarlo.</small>
+                </div>
             </div>
             {% endif %}
 
@@ -79,4 +82,101 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const clients = [
+        {% for u in users %}
+        { id: {{ u.id }}, nombre: {{ u.nombre|tojson }}, email: {{ u.email|tojson }} }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+    const chipsEl = document.getElementById('coupon-chips');
+    const searchInput = document.getElementById('coupon-client-search');
+    const dropdownEl = document.getElementById('coupon-client-dropdown');
+    const hiddenEl = document.getElementById('coupon-user-emails');
+    if (!hiddenEl) return;
+
+    const selectedEmails = new Set();
+    const selectedNames = new Map();
+
+    function updateHidden() {
+        hiddenEl.value = Array.from(selectedEmails).join(',');
+    }
+
+    function renderChips() {
+        chipsEl.innerHTML = '';
+        selectedNames.forEach((name, email) => {
+            const chip = document.createElement('span');
+            chip.className = 'badge bg-rosa-light text-rosa d-inline-flex align-items-center gap-1';
+            chip.textContent = name;
+            const x = document.createElement('button');
+            x.type = 'button';
+            x.className = 'btn btn-sm p-0 border-0 bg-transparent text-rosa';
+            x.innerHTML = '<i class="bi bi-x-lg"></i>';
+            x.addEventListener('click', () => {
+                selectedEmails.delete(email);
+                selectedNames.delete(email);
+                renderChips();
+                updateHidden();
+            });
+            chip.appendChild(x);
+            chipsEl.appendChild(chip);
+        });
+    }
+
+    function closeDropdown() {
+        dropdownEl.classList.add('d-none');
+    }
+
+    function renderDropdown(filter) {
+        dropdownEl.innerHTML = '';
+        dropdownEl.classList.remove('d-none');
+        const q = filter.trim().toLowerCase();
+        let visible = 0;
+        clients.forEach(c => {
+            if (selectedEmails.has(c.email)) return;
+            const hay = (c.nombre + ' ' + c.email).toLowerCase();
+            if (q && !hay.includes(q)) return;
+            visible++;
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+            item.innerHTML = `<span><strong>${c.nombre}</strong></span><small class="text-muted">${c.email}</small>`;
+            item.addEventListener('click', () => {
+                selectedEmails.add(c.email);
+                selectedNames.set(c.email, c.nombre);
+                searchInput.value = '';
+                renderChips();
+                updateHidden();
+                renderDropdownVisible();
+            });
+            dropdownEl.appendChild(item);
+        });
+        if (visible === 0) {
+            const none = document.createElement('div');
+            none.className = 'list-group-item text-muted';
+            none.textContent = 'Sin resultados';
+            dropdownEl.appendChild(none);
+        }
+    }
+
+    function renderDropdownVisible() {
+        renderDropdown(searchInput.value);
+    }
+
+    searchInput.addEventListener('focus', () => renderDropdown(searchInput.value));
+    searchInput.addEventListener('input', () => renderDropdown(searchInput.value));
+    searchInput.addEventListener('blur', () => setTimeout(closeDropdown, 150));
+
+    document.addEventListener('click', (e) => {
+        const picker = document.querySelector('.coupon-client-picker');
+        if (picker && !picker.contains(e.target)) closeDropdown();
+    });
+
+    renderChips();
+    updateHidden();
+})();
+</script>
 {% endblock %}

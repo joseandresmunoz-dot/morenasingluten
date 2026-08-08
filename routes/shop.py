@@ -347,24 +347,39 @@ def check_discount_rules(items_detail):
         cond = rule.condicion or {}
 
         if rule.tipo == 'por_cantidad':
-            min_qty = cond.get('min_cantidad', 0)
             prod_id = cond.get('producto_id')
             cat_id = cond.get('categoria_id')
+            tiers = cond.get('tiers')
             for item in items_detail:
                 match = False
-                if prod_id and item['product'].id == prod_id and item['cantidad'] >= min_qty:
+                if prod_id and item['product'].id == prod_id:
                     match = True
-                elif cat_id and item['product'].category_id == cat_id and item['cantidad'] >= min_qty:
+                elif cat_id and item['product'].category_id == cat_id:
                     match = True
-                elif not prod_id and not cat_id and item['cantidad'] >= min_qty:
+                elif not prod_id and not cat_id:
                     match = True
+                if not match:
+                    continue
 
-                if match:
-                    if rule.descuento_tipo == 'porcentaje':
-                        desc = float(item['subtotal']) * float(rule.descuento_valor) / 100
-                    else:
-                        desc = float(rule.descuento_valor)
-                    applied.append({'nombre': rule.nombre, 'descuento': desc})
+                if tiers:
+                    best = None
+                    for t in tiers:
+                        if item['cantidad'] >= t['min']:
+                            best = t
+                    if best:
+                        if best['tipo'] == 'porcentaje':
+                            desc = float(item['subtotal']) * float(best['valor']) / 100
+                        else:
+                            desc = float(best['valor'])
+                        applied.append({'nombre': rule.nombre, 'descuento': desc})
+                else:
+                    min_qty = cond.get('min_cantidad', 0)
+                    if item['cantidad'] >= min_qty:
+                        if rule.descuento_tipo == 'porcentaje':
+                            desc = float(item['subtotal']) * float(rule.descuento_valor) / 100
+                        else:
+                            desc = float(rule.descuento_valor)
+                        applied.append({'nombre': rule.nombre, 'descuento': desc})
 
         elif rule.tipo == 'por_dia':
             dia = cond.get('dia_semana', '').lower()
